@@ -22,6 +22,14 @@ defmodule EmergencySystem.Users.UserManager do
 
   @valid_roles [:citizen, :volunteer, :coordinator, :administrator]
 
+  @permissions %{
+    view_information: [:citizen, :volunteer, :coordinator, :administrator],
+    register_need: [:citizen, :volunteer, :coordinator, :administrator],
+    assign_resource: [:coordinator, :administrator],
+    manage_zones: [:coordinator, :administrator],
+    manage_users: [:administrator]
+  }
+
   # -----------------------------------
   # Conexión y registro de usuarios
   # -----------------------------------
@@ -157,6 +165,72 @@ defmodule EmergencySystem.Users.UserManager do
   end
 
   def disconnect(_state, _username) do
+    {:error, :invalid_arguments}
+  end
+
+  # -----------------------------------
+  # Autorización según el rol
+  # -----------------------------------
+
+  @doc """
+  Verifica si un usuario tiene autorización para realizar una operación.
+
+  Comprueba que el usuario esté registrado, tenga una sesión activa
+  y que su rol esté autorizado para ejecutar la acción solicitada.
+
+  ## Parámetros
+
+  - `state`: mapa que contiene el estado actual del sistema.
+  - `username`: nombre de usuario que solicita realizar la operación.
+  - `action`: átomo que identifica la operación que desea ejecutar.
+
+  ## Valor de retorno
+
+  - `{:ok, user}`: cuando el usuario está autorizado. Contiene sus datos públicos.
+  - `{:error, reason}`: cuando no puede realizar la operación.
+
+  ## Posibles errores
+
+  - `:user_not_found`: el usuario no está registrado.
+  - `:not_connected`: el usuario no tiene una sesión activa.
+  - `:invalid_action`: la operación no está definida en el mapa de permisos.
+  - `:unauthorized`: el rol del usuario no tiene permiso para realizar la operación.
+  - `:invalid_arguments`: los argumentos no tienen los tipos esperados.
+
+  ## Ejemplo de uso
+
+      EmergencySystem.Users.UserManager.authorize(
+        state,
+        "laura",
+        :assign_resource
+      )
+  """
+  def authorize(state, username, action)
+      when is_map(state) and is_binary(username) and is_atom(action) do
+    case Map.fetch(state.users, username) do
+      {:ok, user} ->
+        if MapSet.member?(state.active_users, username) do
+          case Map.fetch(@permissions, action) do
+            {:ok, allowed_roles} ->
+              if Enum.member?(allowed_roles, user.role) do
+                {:ok, public_user(user)}
+              else
+                {:error, :unauthorized}
+              end
+
+            :error ->
+              {:error, :invalid_action}
+          end
+        else
+          {:error, :not_connected}
+        end
+
+      :error ->
+        {:error, :user_not_found}
+    end
+  end
+
+  def authorize(_state, _username, _action) do
     {:error, :invalid_arguments}
   end
 
