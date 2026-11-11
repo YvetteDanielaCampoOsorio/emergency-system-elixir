@@ -147,4 +147,53 @@ defmodule EmergencySystem.Users.UserManagerTest do
                )
     end
   end
+
+  describe "disconnect/2" do
+    test "desconecta un usuario activo", context do
+      assert {:ok, connected_state, _user} =
+               UserManager.connect(
+                 context.state,
+                 "laura",
+                 "1234",
+                 context.user_data
+               )
+
+      assert {:ok, updated_state, user} =
+               UserManager.disconnect(connected_state, "laura")
+
+      refute MapSet.member?(updated_state.active_users, "laura")
+      assert user.username == "laura"
+
+      assert hd(updated_state.activity_log).action == :logout
+    end
+
+    test "rechaza la desconexión de un usuario inexistente", context do
+      assert {:error, :user_not_found} =
+               UserManager.disconnect(context.state, "desconocido")
+    end
+
+    test "rechaza la desconexión de un usuario inactivo", context do
+      assert {:ok, connected_state, _user} =
+               UserManager.connect(
+                 context.state,
+                 "laura",
+                 "1234",
+                 context.user_data
+               )
+
+      inactive_state = %{
+        connected_state
+        | active_users: MapSet.new()
+      }
+
+      assert {:error, :not_connected} =
+               UserManager.disconnect(inactive_state, "laura")
+    end
+
+    test "rechaza argumentos inválidos", context do
+      assert {:error, :invalid_arguments} =
+               UserManager.disconnect(context.state, 123)
+    end
+  end
+
 end

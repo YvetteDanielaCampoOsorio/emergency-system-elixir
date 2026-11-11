@@ -101,9 +101,71 @@ defmodule EmergencySystem.Users.UserManager do
   end
 
   # -----------------------------------
+  # Desconexión de usuarios
+  # -----------------------------------
+
+  @doc """
+  Desconecta un usuario del sistema de gestión de emergencias.
+
+  Verifica que el usuario esté registrado y tenga una sesión
+  activa. Si cumple ambas condiciones, elimina su nombre del
+  conjunto de usuarios activos y registra la desconexión.
+
+  ## Parámetros
+
+  - `state`: mapa que contiene el estado actual del sistema.
+  - `username`: nombre de usuario que desea desconectarse.
+
+  ## Valor de retorno
+
+  - `{:ok, updated_state, user}`: cuando la desconexión se realiza
+    correctamente. Contiene el estado actualizado y los datos
+    públicos del usuario.
+  - `{:error, reason}`: cuando no es posible realizar la operación.
+
+  ## Posibles errores
+
+  - `:user_not_found`: el usuario no está registrado.
+  - `:not_connected`: el usuario no tiene una sesión activa.
+  - `:invalid_arguments`: los argumentos no tienen los tipos esperados.
+
+  ## Ejemplo de uso
+
+      EmergencySystem.Users.UserManager.disconnect(state, "laura")
+  """
+  def disconnect(state, username)
+      when is_map(state) and is_binary(username) do
+    case Map.fetch(state.users, username) do
+      {:ok, user} ->
+        if MapSet.member?(state.active_users, username) do
+          updated_state =
+            state
+            |> update_in(
+              [:active_users],
+              &MapSet.delete(&1, username)
+            )
+            |> record_activity(username, :logout)
+
+          {:ok, updated_state, public_user(user)}
+        else
+          {:error, :not_connected}
+        end
+
+      :error ->
+        {:error, :user_not_found}
+    end
+  end
+
+  def disconnect(_state, _username) do
+    {:error, :invalid_arguments}
+  end
+
+  # -----------------------------------
   # Registro automático
   # -----------------------------------
 
+  # Registra un usuario nuevo con los datos proporcionados,
+  # genera sus credenciales de autenticación y establece su sesión activa.
   defp register_and_connect(state, username, password, user_data) do
     full_name = Map.get(user_data, :full_name)
     role = Map.get(user_data, :role)
@@ -147,11 +209,15 @@ defmodule EmergencySystem.Users.UserManager do
   # Verificación de credenciales
   # -----------------------------------
 
+  # Verifica si la contraseña ingresada corresponde a las credenciales
+  # almacenadas para el usuario, utilizando su sal y hash registrados.
   defp verify_password(password, user) do
     hash_password(password, user.password_salt) ==
       user.password_hash
   end
 
+  # Genera un hash seguro de la contraseña mediante PBKDF2-HMAC
+  # con SHA-256, utilizando una sal y 100.000 iteraciones.
   defp hash_password(password, salt) do
     :crypto.pbkdf2_hmac(:sha256, password, salt, 100_000, 32)
   end
@@ -160,12 +226,16 @@ defmodule EmergencySystem.Users.UserManager do
   # Administración de sesiones
   # -----------------------------------
 
+  # Agrega al usuario al conjunto de sesiones activas y registra
+  # la actividad realizada (registro o inicio de sesión).
   defp activate_user(state, username, action) do
     state
     |> update_in([:active_users], &MapSet.put(&1, username))
     |> record_activity(username, action)
   end
 
+  # Registra una actividad del usuario en el historial del sistema,
+  # almacenando su nombre de usuario, acción y fecha de ejecución.
   defp record_activity(state, username, action) do
     activity = %{
       username: username,
@@ -180,7 +250,11 @@ defmodule EmergencySystem.Users.UserManager do
   # Protección de información
   # -----------------------------------
 
+  # Genera una versión pública de los datos del usuario,
+  # excluyendo la sal y el hash de la contraseña para proteger
+  # la información utilizada durante la autenticación.
   defp public_user(user) do
     Map.drop(user, [:password_salt, :password_hash])
   end
+
 end
