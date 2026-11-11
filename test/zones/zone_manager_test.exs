@@ -201,4 +201,81 @@ defmodule EmergencySystem.Zones.ZoneManagerTest do
                )
     end
   end
+
+  describe "list_all_attention_points/1" do
+    test "recorre las zonas, sectores y puntos de atención", %{state: state} do
+
+      assert {:ok, state, _zone} =
+                ZoneManager.create_zone(state, "Z001", "Centro", :high, 250)
+
+
+      assert {:ok, state, _zone} =
+               ZoneManager.add_sector(state, "Z001", "S001", "Norte", 100)
+
+      assert {:ok, state, _zone} =
+               ZoneManager.add_attention_point(
+                 state,
+                 "Z001",
+                 "S001",
+                 "P001",
+                 "Auxilios",
+                 "Puesto médico"
+               )
+
+      assert {:ok, state, _zone} =
+               ZoneManager.add_attention_point(
+                 state,
+                 "Z001",
+                 "S001",
+                 "P002",
+                 "Agua",
+                 "Distribución de agua"
+               )
+
+      assert {:ok, points} = ZoneManager.list_all_attention_points(state)
+
+      assert length(points) == 2
+      assert Enum.all?(points, fn point -> point.zone_code == "Z001" end)
+      assert Enum.all?(points, fn point -> point.sector_code == "S001" end)
+    end
+
+    test "devuelve una lista vacía si no hay puntos registrados", %{state: state} do
+      assert {:ok, []} = ZoneManager.list_all_attention_points(state)
+    end
+
+    test "rechaza un estado inválido" do
+      assert {:error, :invalid_arguments} =
+               ZoneManager.list_all_attention_points(nil)
+    end
+  end
+
+  describe "zone_statistics/2" do
+    test "calcula correctamente las estadísticas de una zona", %{state: state} do
+      assert {:ok, state, _zone} =
+        ZoneManager.create_zone(state, "Z001", "Centro", :high, 250)
+
+
+      assert {:ok, state, _zone} =
+               ZoneManager.add_sector(state, "Z001", "S001", "Norte", 100)
+
+      assert {:ok, state, _zone} =
+               ZoneManager.add_sector(state, "Z001", "S002", "Sur", 150)
+
+      assert {:ok, statistics} =
+               ZoneManager.zone_statistics(state, "Z001")
+
+      assert statistics.sector_count == 2
+      assert statistics.affected_people_in_sectors == 250
+    end
+
+    test "rechaza una zona inexistente", %{state: state} do
+      assert {:error, :zone_not_found} =
+               ZoneManager.zone_statistics(state, "Z999")
+    end
+
+    test "rechaza argumentos inválidos", %{state: state} do
+      assert {:error, :invalid_arguments} =
+               ZoneManager.zone_statistics(state, 123)
+    end
+  end
 end
