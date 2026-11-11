@@ -83,8 +83,7 @@ defmodule EmergencySystem.Users.UserManager do
   """
   def connect(state, username, password, user_data)
       when is_map(state) and is_binary(username) and
-           is_binary(password) and is_map(user_data) do
-
+             is_binary(password) and is_map(user_data) do
     case Map.fetch(state.users, username) do
       {:ok, user} ->
         cond do
@@ -330,5 +329,4 @@ defmodule EmergencySystem.Users.UserManager do
   defp public_user(user) do
     Map.drop(user, [:password_salt, :password_hash])
   end
-
 end

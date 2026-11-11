@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Users.UserManagerTest do
   use ExUnit.Case, async: true
 
@@ -199,19 +198,19 @@ defmodule EmergencySystem.Users.UserManagerTest do
   describe "authorize/3" do
     test "permite una operación autorizada", context do
       assert {:ok, connected_state, _user} =
-              UserManager.connect(
-                context.state,
-                "laura",
-                "1234",
-                context.user_data
-              )
+               UserManager.connect(
+                 context.state,
+                 "laura",
+                 "1234",
+                 context.user_data
+               )
 
       assert {:ok, user} =
-              UserManager.authorize(
-                connected_state,
-                "laura",
-                :assign_resource
-              )
+               UserManager.authorize(
+                 connected_state,
+                 "laura",
+                 :assign_resource
+               )
 
       assert user.role == :coordinator
     end
@@ -220,74 +219,74 @@ defmodule EmergencySystem.Users.UserManagerTest do
       citizen_data = %{context.user_data | role: :citizen}
 
       assert {:ok, connected_state, _user} =
-              UserManager.connect(
-                context.state,
-                "laura",
-                "1234",
-                citizen_data
-              )
+               UserManager.connect(
+                 context.state,
+                 "laura",
+                 "1234",
+                 citizen_data
+               )
 
       assert {:error, :unauthorized} =
-              UserManager.authorize(
-                connected_state,
-                "laura",
-                :assign_resource
-              )
+               UserManager.authorize(
+                 connected_state,
+                 "laura",
+                 :assign_resource
+               )
     end
 
     test "rechaza un usuario inexistente", context do
       assert {:error, :user_not_found} =
-              UserManager.authorize(
-                context.state,
-                "desconocido",
-                :assign_resource
-              )
+               UserManager.authorize(
+                 context.state,
+                 "desconocido",
+                 :assign_resource
+               )
     end
 
     test "rechaza un usuario desconectado", context do
       assert {:ok, connected_state, _user} =
-              UserManager.connect(
-                context.state,
-                "laura",
-                "1234",
-                context.user_data
-              )
+               UserManager.connect(
+                 context.state,
+                 "laura",
+                 "1234",
+                 context.user_data
+               )
 
       assert {:ok, disconnected_state, _user} =
-              UserManager.disconnect(connected_state, "laura")
+               UserManager.disconnect(connected_state, "laura")
 
       assert {:error, :not_connected} =
-              UserManager.authorize(
-                disconnected_state,
-                "laura",
-                :assign_resource
-              )
+               UserManager.authorize(
+                 disconnected_state,
+                 "laura",
+                 :assign_resource
+               )
     end
 
     test "rechaza una operación desconocida", context do
       assert {:ok, connected_state, _user} =
-              UserManager.connect(
-                context.state,
-                "laura",
-                "1234",
-                context.user_data
-              )
+               UserManager.connect(
+                 context.state,
+                 "laura",
+                 "1234",
+                 context.user_data
+               )
 
       assert {:error, :invalid_action} =
-              UserManager.authorize(
-                connected_state,
-                "laura",
-                :delete_everything
-              )
+               UserManager.authorize(
+                 connected_state,
+                 "laura",
+                 :delete_everything
+               )
     end
 
     test "rechaza argumentos inválidos", context do
       assert {:error, :invalid_arguments} =
-              UserManager.authorize(
-                context.state,
-                123,
-                :assign_resource
-              )
+               UserManager.authorize(
+                 context.state,
+                 123,
+                 :assign_resource
+               )
     end
   end
 end

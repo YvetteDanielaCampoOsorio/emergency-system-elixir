@@ -26,7 +26,7 @@ defmodule EmergencySystem.Data do
   # Inicialización del sistema
   # -----------------------------------
 
- @doc """
+  @doc """
   Inicializa el estado general del sistema de emergencias.
 
   Crea un mapa que contiene las colecciones necesarias para
@@ -80,7 +80,7 @@ defmodule EmergencySystem.Data do
     }
   end
 
- # -----------------------------------
+  # -----------------------------------
   # Estructuras de zonas
   # -----------------------------------
 
@@ -124,7 +124,7 @@ defmodule EmergencySystem.Data do
     }
   end
 
-   # -----------------------------------
+  # -----------------------------------
   # Estructuras de sectores
   # -----------------------------------
 

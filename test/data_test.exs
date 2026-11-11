@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.DataTest do
   use ExUnit.Case
 
@@ -35,11 +34,12 @@ defmodule EmergencySystem.DataTest do
   end
 
   test "creates an attention point" do
-    point = Data.new_attention_point(
-      "P001",
-      "Puesto de salud",
-      "Atención de primeros auxilios"
-    )
+    point =
+      Data.new_attention_point(
+        "P001",
+        "Puesto de salud",
+        "Atención de primeros auxilios"
+      )
 
     assert point.code == "P001"
     assert point.name == "Puesto de salud"
