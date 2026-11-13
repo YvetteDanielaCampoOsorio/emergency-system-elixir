@@ -204,10 +204,8 @@ defmodule EmergencySystem.Zones.ZoneManagerTest do
 
   describe "list_all_attention_points/1" do
     test "recorre las zonas, sectores y puntos de atención", %{state: state} do
-
       assert {:ok, state, _zone} =
-                ZoneManager.create_zone(state, "Z001", "Centro", :high, 250)
-
+               ZoneManager.create_zone(state, "Z001", "Centro", :high, 250)
 
       assert {:ok, state, _zone} =
                ZoneManager.add_sector(state, "Z001", "S001", "Norte", 100)
@@ -252,8 +250,7 @@ defmodule EmergencySystem.Zones.ZoneManagerTest do
   describe "zone_statistics/2" do
     test "calcula correctamente las estadísticas de una zona", %{state: state} do
       assert {:ok, state, _zone} =
-        ZoneManager.create_zone(state, "Z001", "Centro", :high, 250)
-
+               ZoneManager.create_zone(state, "Z001", "Centro", :high, 250)
 
       assert {:ok, state, _zone} =
                ZoneManager.add_sector(state, "Z001", "S001", "Norte", 100)

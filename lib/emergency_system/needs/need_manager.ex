@@ -18,7 +18,23 @@ defmodule EmergencySystem.Needs.NeedManager do
   """
 
   @valid_priorities [:critical, :high, :medium, :low]
+
   @valid_statuses [:pending, :assigned, :in_progress, :attended, :cancelled]
+
+  @valid_transitions %{
+    pending: [:assigned, :cancelled],
+    assigned: [:pending, :in_progress, :cancelled],
+    in_progress: [:attended, :cancelled],
+    attended: [],
+    cancelled: []
+  }
+
+  @priority_order %{
+    critical: 1,
+    high: 2,
+    medium: 3,
+    low: 4
+  }
 
   # ==================================================
   # REGISTRO DE NECESIDADES
@@ -59,13 +75,13 @@ defmodule EmergencySystem.Needs.NeedManager do
       register_need(state, "N001", "food", "Se necesitan alimentos",
         50, "Z001", :critical, "usuario1")
   """
-def register_need(state, id, type, description, quantity, zone_code, priority, reporter)
+  def register_need(state, id, type, description, quantity, zone_code, priority, reporter)
       when is_map(state) and is_binary(id) and is_binary(type) and
              is_binary(description) and is_integer(quantity) and
              is_binary(zone_code) and is_atom(priority) and is_binary(reporter) do
     cond do
       String.trim(id) == "" or String.trim(type) == "" or
-          String.trim(description) == "" or String.trim(zone_code) == "" or
+        String.trim(description) == "" or String.trim(zone_code) == "" or
           String.trim(reporter) == "" ->
         {:error, :empty_fields}
 
@@ -76,7 +92,7 @@ def register_need(state, id, type, description, quantity, zone_code, priority, r
         {:error, :invalid_priority}
 
       not Map.has_key?(state, :needs) or
-          not Map.has_key?(state, :zones) or
+        not Map.has_key?(state, :zones) or
           not Map.has_key?(state, :users) ->
         {:error, :invalid_state}
 
@@ -185,9 +201,10 @@ def register_need(state, id, type, description, quantity, zone_code, priority, r
       true ->
         case list_needs(state) do
           {:ok, needs} ->
-            filtered = Enum.filter(needs, fn need ->
-              need.zone_code == zone_code
-            end)
+            filtered =
+              Enum.filter(needs, fn need ->
+                need.zone_code == zone_code
+              end)
 
             {:ok, filtered}
 
@@ -236,9 +253,10 @@ def register_need(state, id, type, description, quantity, zone_code, priority, r
       true ->
         case list_needs(state) do
           {:ok, needs} ->
-            filtered = Enum.filter(needs, fn need ->
-              need.type == type
-            end)
+            filtered =
+              Enum.filter(needs, fn need ->
+                need.type == type
+              end)
 
             {:ok, filtered}
 
@@ -287,9 +305,10 @@ def register_need(state, id, type, description, quantity, zone_code, priority, r
       true ->
         case list_needs(state) do
           {:ok, needs} ->
-            filtered = Enum.filter(needs, fn need ->
-              need.priority == priority
-            end)
+            filtered =
+              Enum.filter(needs, fn need ->
+                need.priority == priority
+              end)
 
             {:ok, filtered}
 
@@ -338,9 +357,10 @@ def register_need(state, id, type, description, quantity, zone_code, priority, r
       true ->
         case list_needs(state) do
           {:ok, needs} ->
-            filtered = Enum.filter(needs, fn need ->
-              need.status == status
-            end)
+            filtered =
+              Enum.filter(needs, fn need ->
+                need.status == status
+              end)
 
             {:ok, filtered}
 
@@ -354,10 +374,125 @@ def register_need(state, id, type, description, quantity, zone_code, priority, r
     {:error, :invalid_arguments}
   end
 
+  @doc """
+  Ordena las necesidades registradas desde la prioridad más alta
+  hasta la más baja.
 
+  ## Parámetros
+  - `state`: estado actual del sistema.
+
+  ## Retorno
+  - `{:ok, sorted_needs}` con las necesidades ordenadas por prioridad.
+  - `{:error, reason}` si ocurre un error.
+
+  ## Posibles errores
+  - `:invalid_state`: estructura del estado incorrecta.
+  - `:invalid_arguments`: argumento con tipo incorrecto.
+
+  ## Ejemplo
+      sort_by_priority(state)
+  """
+  def sort_by_priority(state) when is_map(state) do
+    case list_needs(state) do
+      {:ok, needs} ->
+        sorted_needs =
+          Enum.sort_by(needs, fn need ->
+            Map.get(@priority_order, Map.get(need, :priority), 99)
+          end)
+
+        {:ok, sorted_needs}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def sort_by_priority(_state) do
+    {:error, :invalid_arguments}
+  end
+
+  # ==================================================
+  # GESTIÓN DE ESTADOS
+  # ==================================================
+
+  @doc """
+  Actualiza el estado de una necesidad registrada, siempre que la transición
+  solicitada esté permitida.
+
+  ## Parámetros
+  - `state`: estado actual del sistema.
+  - `need_id`: identificador de la necesidad.
+  - `new_status`: nuevo estado que se desea asignar.
+
+  ## Retorno
+  - `{:ok, updated_state, updated_need}` si la actualización fue exitosa.
+  - `{:error, reason}` si ocurre un error.
+
+  ## Posibles errores
+  - `:invalid_arguments`: argumentos con tipos incorrectos.
+  - `:empty_fields`: identificador vacío.
+  - `:invalid_state`: estructura del estado incorrecta o estado actual inválido.
+  - `:need_not_found`: la necesidad no existe.
+  - `:invalid_status`: el nuevo estado no está permitido.
+  - `:invalid_transition`: la transición no está permitida.
+
+  ## Ejemplo
+      update_need_status(state, "N001", :assigned)
+  """
+  def update_need_status(state, need_id, new_status)
+      when is_map(state) and is_binary(need_id) and is_atom(new_status) do
+    cond do
+      String.trim(need_id) == "" ->
+        {:error, :empty_fields}
+
+      new_status not in @valid_statuses ->
+        {:error, :invalid_status}
+
+      true ->
+        case Map.fetch(state, :needs) do
+          {:ok, needs} when is_map(needs) ->
+            case Map.fetch(needs, need_id) do
+              {:ok, need} when is_map(need) ->
+                case Map.fetch(need, :status) do
+                  {:ok, current_status} ->
+                    case Map.fetch(@valid_transitions, current_status) do
+                      {:ok, allowed_statuses} ->
+                        if new_status in allowed_statuses do
+                          updated_need = Map.put(need, :status, new_status)
+                          updated_needs = Map.put(needs, need_id, updated_need)
+                          updated_state = Map.put(state, :needs, updated_needs)
+
+                          {:ok, updated_state, updated_need}
+                        else
+                          {:error, :invalid_transition}
+                        end
+
+                      :error ->
+                        {:error, :invalid_state}
+                    end
+
+                  :error ->
+                    {:error, :invalid_state}
+                end
+
+              :error ->
+                {:error, :need_not_found}
+
+              _ ->
+                {:error, :invalid_state}
+            end
+
+          _ ->
+            {:error, :invalid_state}
+        end
+    end
+  end
+
+  def update_need_status(_state, _need_id, _new_status) do
+    {:error, :invalid_arguments}
+  end
 
   # ==================================================
   # FUNCIONES AUXILIARES
   # ==================================================
-
 end
