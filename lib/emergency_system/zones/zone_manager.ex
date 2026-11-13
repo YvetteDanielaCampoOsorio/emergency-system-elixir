@@ -6,7 +6,7 @@ defmodule EmergencySystem.Zones.ZoneManager do
   así como consultar su información y estado general.
 
    ## Información
-
+   
   - **Versión:** 1.0
   - **Autor:** Yvette Daniela Campo Osorio, Sofia Aviles Diaz, Santiago Barrero Lopez
   - **Fecha:** noviembre de 2026
