@@ -126,6 +126,149 @@ defmodule EmergencySystem.Resources.ResourceManager do
   end
 
   # ==================================================
+  # MOVIMIENTOS DE INVENTARIO
+  # ==================================================
+
+  @doc """
+  Registra una entrada de unidades al inventario de un recurso.
+
+  ## Parámetros
+  - `state`: estado actual del sistema.
+  - `resource_code`: código del recurso que recibirá las unidades.
+  - `quantity`: cantidad de unidades que ingresarán.
+
+  ## Retorna
+  - `{:ok, updated_state, movement}`: si la entrada se registra correctamente.
+  - `{:error, :empty_fields}`: si el código está vacío.
+  - `{:error, :invalid_quantity}`: si la cantidad no es positiva.
+  - `{:error, :resource_not_found}`: si el recurso no existe.
+  - `{:error, :invalid_state}`: si el estado no tiene una estructura válida.
+  - `{:error, :invalid_arguments}`: si los argumentos son incorrectos.
+  """
+  def register_entry(state, resource_code, quantity)
+      when is_map(state) and is_binary(resource_code) and is_integer(quantity) do
+    cond do
+      String.trim(resource_code) == "" ->
+        {:error, :empty_fields}
+
+      quantity <= 0 ->
+        {:error, :invalid_quantity}
+
+      true ->
+        case {Map.fetch(state, :resources), Map.fetch(state, :resource_movements)} do
+          {{:ok, resources}, {:ok, movements}}
+          when is_map(resources) and is_list(movements) ->
+            case Map.fetch(resources, resource_code) do
+              {:ok, resource} ->
+                previous_quantity = resource.quantity
+                new_quantity = previous_quantity + quantity
+
+                updated_resource = %{resource | quantity: new_quantity}
+
+                movement = %{
+                  type: :entry,
+                  resource_code: resource_code,
+                  quantity: quantity,
+                  previous_quantity: previous_quantity,
+                  new_quantity: new_quantity,
+                  timestamp: DateTime.utc_now()
+                }
+
+                updated_state =
+                  state
+                  |> Map.put(:resources, Map.put(resources, resource_code, updated_resource))
+                  |> Map.put(:resource_movements, movements ++ [movement])
+
+                {:ok, updated_state, movement}
+
+              :error ->
+                {:error, :resource_not_found}
+            end
+
+          _ ->
+            {:error, :invalid_state}
+        end
+    end
+  end
+
+  def register_entry(_state, _resource_code, _quantity),
+    do: {:error, :invalid_arguments}
+
+  @doc """
+  Registra una salida de unidades del inventario de un recurso.
+
+  ## Parámetros
+  - `state`: estado actual del sistema.
+  - `resource_code`: código del recurso del que saldrán las unidades.
+  - `quantity`: cantidad de unidades que se retirarán.
+
+  ## Retorna
+  - `{:ok, updated_state, movement}`: si la salida se registra correctamente.
+  - `{:error, :empty_fields}`: si el código está vacío.
+  - `{:error, :invalid_quantity}`: si la cantidad no es positiva.
+  - `{:error, :resource_not_found}`: si el recurso no existe.
+  - `{:error, :insufficient_inventory}`: si no hay suficientes unidades.
+  - `{:error, :invalid_state}`: si el estado no tiene una estructura válida.
+  - `{:error, :invalid_arguments}`: si los argumentos son incorrectos.
+  """
+  def register_exit(state, resource_code, quantity)
+      when is_map(state) and is_binary(resource_code) and is_integer(quantity) do
+    cond do
+      String.trim(resource_code) == "" ->
+        {:error, :empty_fields}
+
+      quantity <= 0 ->
+        {:error, :invalid_quantity}
+
+      true ->
+        case {Map.fetch(state, :resources), Map.fetch(state, :resource_movements)} do
+          {{:ok, resources}, {:ok, movements}}
+          when is_map(resources) and is_list(movements) ->
+            case Map.fetch(resources, resource_code) do
+              {:ok, resource} ->
+                previous_quantity = resource.quantity
+
+                if quantity > previous_quantity do
+                  {:error, :insufficient_inventory}
+                else
+                  new_quantity = previous_quantity - quantity
+
+                  updated_resource = %{resource | quantity: new_quantity}
+
+                  movement = %{
+                    type: :exit,
+                    resource_code: resource_code,
+                    quantity: quantity,
+                    previous_quantity: previous_quantity,
+                    new_quantity: new_quantity,
+                    timestamp: DateTime.utc_now()
+                  }
+
+                  updated_state =
+                    state
+                    |> Map.put(
+                      :resources,
+                      Map.put(resources, resource_code, updated_resource)
+                    )
+                    |> Map.put(:resource_movements, movements ++ [movement])
+
+                  {:ok, updated_state, movement}
+                end
+
+              :error ->
+                {:error, :resource_not_found}
+            end
+
+          _ ->
+            {:error, :invalid_state}
+        end
+    end
+  end
+
+  def register_exit(_state, _resource_code, _quantity),
+    do: {:error, :invalid_arguments}
+
+  # ==================================================
   # CONSULTA DE RECURSOS
   # ==================================================
 
@@ -232,6 +375,28 @@ defmodule EmergencySystem.Resources.ResourceManager do
   end
 
   def filter_by_location(_state, _location), do: {:error, :invalid_arguments}
+
+  @doc """
+  Consulta el historial de movimientos del inventario.
+
+  ## Parámetros
+  - `state`: estado actual del sistema.
+
+  ## Retorna
+  - `{:ok, movements}`: lista de movimientos registrados.
+  - `{:error, :invalid_state}`: si el estado no contiene un historial válido.
+  """
+  def list_resource_movements(state) when is_map(state) do
+    case Map.fetch(state, :resource_movements) do
+      {:ok, movements} when is_list(movements) ->
+        {:ok, movements}
+
+      _ ->
+        {:error, :invalid_state}
+    end
+  end
+
+  def list_resource_movements(_state), do: {:error, :invalid_state}
 
   # ==================================================
   # FUNCIONES AUXILIARES

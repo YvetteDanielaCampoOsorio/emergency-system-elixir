@@ -71,6 +71,7 @@ defmodule EmergencySystem.Data do
       zones: %{},
       needs: %{},
       resources: %{},
+      resource_movements: [],
       people: %{},
       messages: [],
       pets: %{},

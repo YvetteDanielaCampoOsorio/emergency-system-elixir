@@ -247,4 +247,159 @@ defmodule EmergencySystem.Resources.ResourceManagerTest do
                ResourceManager.filter_by_location(%{}, "Z001")
     end
   end
+
+  describe "register_entry/3" do
+    test "registers an inventory entry", %{state: state} do
+      {:ok, state, _resource} =
+        ResourceManager.register_resource(
+          state,
+          "R001",
+          "Agua potable",
+          :water,
+          200,
+          "litros",
+          "Z001",
+          "Agua para consumo"
+        )
+
+      assert {:ok, updated_state, movement} =
+               ResourceManager.register_entry(state, "R001", 50)
+
+      assert updated_state.resources["R001"].quantity == 250
+      assert movement.type == :entry
+      assert movement.quantity == 50
+      assert movement.previous_quantity == 200
+      assert movement.new_quantity == 250
+      assert length(updated_state.resource_movements) == 1
+    end
+
+    test "rejects a zero quantity", %{state: state} do
+      assert {:error, :invalid_quantity} =
+               ResourceManager.register_entry(state, "R001", 0)
+    end
+
+    test "rejects a negative quantity", %{state: state} do
+      assert {:error, :invalid_quantity} =
+               ResourceManager.register_entry(state, "R001", -10)
+    end
+
+    test "rejects a resource that does not exist", %{state: state} do
+      assert {:error, :resource_not_found} =
+               ResourceManager.register_entry(state, "R999", 50)
+    end
+
+    test "rejects an empty resource code", %{state: state} do
+      assert {:error, :empty_fields} =
+               ResourceManager.register_entry(state, " ", 50)
+    end
+
+    test "rejects an invalid state" do
+      assert {:error, :invalid_state} =
+               ResourceManager.register_entry(%{}, "R001", 50)
+    end
+  end
+
+  describe "register_exit/3" do
+    setup %{state: state} do
+      {:ok, updated_state, _resource} =
+        ResourceManager.register_resource(
+          state,
+          "R001",
+          "Agua potable",
+          :water,
+          200,
+          "litros",
+          "Z001",
+          "Agua para consumo"
+        )
+
+      %{state: updated_state}
+    end
+
+    test "registers an inventory exit", %{state: state} do
+      assert {:ok, updated_state, movement} =
+               ResourceManager.register_exit(state, "R001", 50)
+
+      assert updated_state.resources["R001"].quantity == 150
+      assert movement.type == :exit
+      assert movement.quantity == 50
+      assert movement.previous_quantity == 200
+      assert movement.new_quantity == 150
+      assert length(updated_state.resource_movements) == 1
+    end
+
+    test "allows the inventory to reach zero", %{state: state} do
+      assert {:ok, updated_state, _movement} =
+               ResourceManager.register_exit(state, "R001", 200)
+
+      assert updated_state.resources["R001"].quantity == 0
+    end
+
+    test "rejects an exit greater than available inventory", %{state: state} do
+      assert {:error, :insufficient_inventory} =
+               ResourceManager.register_exit(state, "R001", 250)
+
+      assert state.resources["R001"].quantity == 200
+      assert state.resource_movements == []
+    end
+
+    test "rejects a zero quantity", %{state: state} do
+      assert {:error, :invalid_quantity} =
+               ResourceManager.register_exit(state, "R001", 0)
+    end
+
+    test "rejects a negative quantity", %{state: state} do
+      assert {:error, :invalid_quantity} =
+               ResourceManager.register_exit(state, "R001", -10)
+    end
+
+    test "rejects a resource that does not exist", %{state: state} do
+      assert {:error, :resource_not_found} =
+               ResourceManager.register_exit(state, "R999", 50)
+    end
+
+    test "rejects an invalid state" do
+      assert {:error, :invalid_state} =
+               ResourceManager.register_exit(%{}, "R001", 50)
+    end
+  end
+
+  describe "list_resource_movements/1" do
+    test "returns all inventory movements", %{state: state} do
+      {:ok, state, _resource} =
+        ResourceManager.register_resource(
+          state,
+          "R001",
+          "Agua potable",
+          :water,
+          200,
+          "litros",
+          "Z001",
+          "Agua para consumo"
+        )
+
+      {:ok, state, _entry} =
+        ResourceManager.register_entry(state, "R001", 50)
+
+      {:ok, state, _exit} =
+        ResourceManager.register_exit(state, "R001", 30)
+
+      assert {:ok, movements} =
+               ResourceManager.list_resource_movements(state)
+
+      assert length(movements) == 2
+      assert Enum.at(movements, 0).type == :entry
+      assert Enum.at(movements, 1).type == :exit
+    end
+
+    test "returns an empty list when there are no movements", %{state: state} do
+      assert {:ok, []} =
+               ResourceManager.list_resource_movements(state)
+    end
+
+    test "rejects an invalid state" do
+      assert {:error, :invalid_state} =
+               ResourceManager.list_resource_movements(%{})
+    end
+  end
 end
