@@ -24,6 +24,15 @@ defmodule EmergencySystem.People.PersonManager do
     :reunified
   ]
 
+  @valid_transitions %{
+    no_information: [:reported],
+    reported: [:located],
+    located: [:transferred, :in_shelter, :reunified],
+    transferred: [:in_shelter, :reunified],
+    in_shelter: [:transferred, :reunified],
+    reunified: []
+  }
+
   # --------------------------------------------------
   # REGISTRO DE PERSONAS
   # --------------------------------------------------
@@ -194,6 +203,73 @@ defmodule EmergencySystem.People.PersonManager do
 
     name_matches and document_matches and
       zone_matches and status_matches
+  end
+
+  # --------------------------------------------------
+  # ACTUALIZACIÓN DEL ESTADO DE PERSONAS
+  # --------------------------------------------------
+
+  @doc """
+  Actualiza el estado de una persona y registra el cambio
+  en el historial del sistema.
+
+  ## Parámetros
+
+  - `state`: estado actual del sistema.
+  - `person_id`: identificador de la persona.
+  - `new_status`: nuevo estado que se desea asignar.
+
+  ## Retorna
+
+  - `{:ok, updated_state, person}` si la actualización es exitosa.
+  - `{:error, reason}` si ocurre una validación fallida.
+  """
+  def update_person_status(state, person_id, new_status) do
+    with true <- valid_state?(state) || {:error, :invalid_state},
+         true <- is_binary(person_id) and person_id != "" ||
+                   {:error, :invalid_id},
+         true <- new_status in @valid_statuses ||
+                   {:error, :invalid_status},
+         {:ok, person} <- find_person(state, person_id),
+         true <- new_status in Map.get(@valid_transitions, person.status, []) ||
+                   {:error, :invalid_transition} do
+
+      updated_person = Map.put(person, :status, new_status)
+
+      updated_people =
+        Map.put(state.people, person_id, updated_person)
+
+      history_entry = %{
+        person_id: person_id,
+        previous_status: person.status,
+        new_status: new_status,
+        timestamp: DateTime.utc_now()
+      }
+
+      updated_history =
+        [history_entry | Map.get(state, :person_status_history, [])]
+
+      updated_state =
+        state
+        |> Map.put(:people, updated_people)
+        |> Map.put(:person_status_history, updated_history)
+
+      {:ok, updated_state, updated_person}
+    else
+      {:error, reason} -> {:error, reason}
+      false -> {:error, :invalid_arguments}
+    end
+  end
+
+  # --------------------------------------------------
+  # FUNCIONES AUXILIARES DE ESTADO
+  # --------------------------------------------------
+
+  defp find_person(state, person_id) do
+    case Map.fetch(state.people, person_id) do
+      {:ok, person} -> {:ok, person}
+      :error -> {:error, :person_not_found}
+    end
   end
 
 end

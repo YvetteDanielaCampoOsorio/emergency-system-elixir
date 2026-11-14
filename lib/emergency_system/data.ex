@@ -75,6 +75,7 @@ defmodule EmergencySystem.Data do
       resource_movements: [],
       resource_assignments: [],
       people: %{},
+      person_status_history: [],
       messages: [],
       pets: %{},
       shelters: %{},

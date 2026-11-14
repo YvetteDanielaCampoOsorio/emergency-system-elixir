@@ -296,4 +296,130 @@ end
              PersonManager.search_people(state)
   end
 
+  # --------------------------------------------------
+  # PRUEBAS DE ACTUALIZACIÓN DE ESTADOS
+  # --------------------------------------------------
+
+  test "updates a person's status successfully" do
+    state = state_with_people()
+
+    assert {:ok, updated_state, person} =
+             PersonManager.update_person_status(
+               state,
+               "P001",
+               :located
+             )
+
+    assert person.status == :located
+    assert updated_state.people["P001"].status == :located
+  end
+
+  test "records the status change in the history" do
+    state = state_with_people()
+
+    assert {:ok, updated_state, _person} =
+             PersonManager.update_person_status(
+               state,
+               "P001",
+               :located
+             )
+
+    [history_entry | _rest] = updated_state.person_status_history
+
+    assert history_entry.person_id == "P001"
+    assert history_entry.previous_status == :reported
+    assert history_entry.new_status == :located
+    assert %DateTime{} = history_entry.timestamp
+  end
+
+  test "allows multiple valid status transitions" do
+    state = state_with_people()
+
+    assert {:ok, state, _person} =
+             PersonManager.update_person_status(
+               state,
+               "P001",
+               :located
+             )
+
+    assert {:ok, state, person} =
+             PersonManager.update_person_status(
+               state,
+               "P001",
+               :in_shelter
+             )
+
+    assert person.status == :in_shelter
+    assert length(state.person_status_history) == 2
+  end
+
+  test "rejects an invalid status transition" do
+    state = state_with_people()
+
+    assert {:error, :invalid_transition} =
+             PersonManager.update_person_status(
+               state,
+               "P001",
+               :reunified
+             )
+  end
+
+  test "rejects an invalid status when updating a person" do
+    state = state_with_people()
+
+    assert {:error, :invalid_status} =
+             PersonManager.update_person_status(
+               state,
+               "P001",
+               :unknown
+             )
+  end
+
+  test "returns an error when the person does not exist" do
+    state = state_with_people()
+
+    assert {:error, :person_not_found} =
+             PersonManager.update_person_status(
+               state,
+               "P999",
+               :located
+             )
+  end
+
+  test "rejects an invalid person identifier" do
+    state = state_with_people()
+
+    assert {:error, :invalid_id} =
+             PersonManager.update_person_status(
+               state,
+               "",
+               :located
+             )
+  end
+
+  test "rejects an invalid state when updating a person" do
+    state = %{people: [], zones: %{}}
+
+    assert {:error, :invalid_state} =
+             PersonManager.update_person_status(
+               state,
+               "P001",
+               :located
+             )
+  end
+
+  test "does not modify the original state when updating a person" do
+    state = state_with_people()
+
+    assert {:ok, updated_state, _person} =
+             PersonManager.update_person_status(
+               state,
+               "P001",
+               :located
+             )
+
+    assert state.people["P001"].status == :reported
+    assert updated_state.people["P001"].status == :located
+  end
+
 end
