@@ -10,9 +10,7 @@ defmodule EmergencySystem.Processes.StateServer do
   evitar que diferentes procesos trabajen sobre copias independientes.
 
   Versión: 1.0
-  Autores: Yvette Daniela Campo Osorio,
-           Sofia Aviles Diaz,
-           Santiago Barrero Lopez
+  Autores: Yvette Daniela Campo Osorio, Sofia Aviles Diaz, Santiago Barrero Lopez
   Fecha: noviembre de 2026
   Licencia: GNU GPL v3
   """
