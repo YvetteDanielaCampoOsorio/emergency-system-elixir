@@ -31,16 +31,16 @@ defmodule EmergencySystem.Resources.ResourceManager do
   # ==================================================
 
   @doc """
-  Registra un nuevo recurso en el sistema.
+  Registra un nuevo recurso y sus existencias iniciales en una ubicación.
 
   ## Parámetros
   - `state`: estado actual del sistema.
   - `code`: código único del recurso.
   - `name`: nombre del recurso.
   - `category`: categoría del recurso.
-  - `quantity`: cantidad disponible.
+  - `quantity`: cantidad inicial disponible.
   - `unit`: unidad de medida.
-  - `location`: ubicación del recurso.
+  - `location`: ubicación inicial del recurso.
   - `description`: descripción del recurso.
 
   ## Retorno
@@ -85,8 +85,9 @@ defmodule EmergencySystem.Resources.ResourceManager do
         {:error, :invalid_category}
 
       true ->
-        case Map.fetch(state, :resources) do
-          {:ok, resources} when is_map(resources) ->
+        case {Map.fetch(state, :resources), Map.fetch(state, :resource_stocks)} do
+          {{:ok, resources}, {:ok, stocks}}
+          when is_map(resources) and is_map(stocks) ->
             if Map.has_key?(resources, code) do
               {:error, :resource_already_exists}
             else
@@ -94,14 +95,17 @@ defmodule EmergencySystem.Resources.ResourceManager do
                 code: code,
                 name: name,
                 category: category,
-                quantity: quantity,
                 unit: unit,
-                location: location,
                 description: description
               }
 
               updated_resources = Map.put(resources, code, resource)
-              updated_state = Map.put(state, :resources, updated_resources)
+              updated_stocks = Map.put(stocks, {code, location}, quantity)
+
+              updated_state =
+                state
+                |> Map.put(:resources, updated_resources)
+                |> Map.put(:resource_stocks, updated_stocks)
 
               {:ok, updated_state, resource}
             end
@@ -130,44 +134,59 @@ defmodule EmergencySystem.Resources.ResourceManager do
   # ==================================================
 
   @doc """
-  Registra una entrada de unidades al inventario de un recurso.
+  Registra una entrada de unidades al inventario de un recurso
+  en una ubicación específica.
 
   ## Parámetros
   - `state`: estado actual del sistema.
-  - `resource_code`: código del recurso que recibirá las unidades.
+  - `resource_code`: código del recurso.
+  - `location`: ubicación que recibe las unidades.
   - `quantity`: cantidad de unidades que ingresarán.
 
   ## Retorna
-  - `{:ok, updated_state, movement}`: si la entrada se registra correctamente.
-  - `{:error, :empty_fields}`: si el código está vacío.
-  - `{:error, :invalid_quantity}`: si la cantidad no es positiva.
-  - `{:error, :resource_not_found}`: si el recurso no existe.
-  - `{:error, :invalid_state}`: si el estado no tiene una estructura válida.
-  - `{:error, :invalid_arguments}`: si los argumentos son incorrectos.
+  - `{:ok, updated_state, movement}` si la entrada es exitosa.
+  - `{:error, reason}` si ocurre un error.
+
+  ## Ejemplo
+
+      iex> ResourceManager.register_entry(state, "R001", "Z001", 50)
+      {:ok, updated_state, movement}
   """
-  def register_entry(state, resource_code, quantity)
-      when is_map(state) and is_binary(resource_code) and is_integer(quantity) do
+  def register_entry(state, resource_code, location, quantity)
+      when is_map(state) and is_binary(resource_code) and
+             is_binary(location) and is_integer(quantity) do
     cond do
-      String.trim(resource_code) == "" ->
+      String.trim(resource_code) == "" or String.trim(location) == "" ->
         {:error, :empty_fields}
 
       quantity <= 0 ->
         {:error, :invalid_quantity}
 
       true ->
-        case {Map.fetch(state, :resources), Map.fetch(state, :resource_movements)} do
-          {{:ok, resources}, {:ok, movements}}
-          when is_map(resources) and is_list(movements) ->
-            case Map.fetch(resources, resource_code) do
-              {:ok, resource} ->
-                previous_quantity = resource.quantity
-                new_quantity = previous_quantity + quantity
+        case {
+          Map.fetch(state, :resources),
+          Map.fetch(state, :resource_stocks),
+          Map.fetch(state, :resource_movements)
+        } do
+          {{:ok, resources}, {:ok, stocks}, {:ok, movements}}
+          when is_map(resources) and is_map(stocks) and is_list(movements) ->
+            stock_key = {resource_code, location}
 
-                updated_resource = %{resource | quantity: new_quantity}
+            cond do
+              not Map.has_key?(resources, resource_code) ->
+                {:error, :resource_not_found}
+
+              not Map.has_key?(stocks, stock_key) ->
+                {:error, :stock_not_found}
+
+              true ->
+                previous_quantity = Map.fetch!(stocks, stock_key)
+                new_quantity = previous_quantity + quantity
 
                 movement = %{
                   type: :entry,
                   resource_code: resource_code,
+                  location: location,
                   quantity: quantity,
                   previous_quantity: previous_quantity,
                   new_quantity: new_quantity,
@@ -176,13 +195,13 @@ defmodule EmergencySystem.Resources.ResourceManager do
 
                 updated_state =
                   state
-                  |> Map.put(:resources, Map.put(resources, resource_code, updated_resource))
+                  |> Map.put(
+                    :resource_stocks,
+                    Map.put(stocks, stock_key, new_quantity)
+                  )
                   |> Map.put(:resource_movements, movements ++ [movement])
 
                 {:ok, updated_state, movement}
-
-              :error ->
-                {:error, :resource_not_found}
             end
 
           _ ->
@@ -191,53 +210,62 @@ defmodule EmergencySystem.Resources.ResourceManager do
     end
   end
 
-  def register_entry(_state, _resource_code, _quantity),
+  def register_entry(_state, _resource_code, _location, _quantity),
     do: {:error, :invalid_arguments}
 
   @doc """
-  Registra una salida de unidades del inventario de un recurso.
+  Registra una salida de unidades del inventario de un recurso
+  desde una ubicación específica.
 
   ## Parámetros
   - `state`: estado actual del sistema.
-  - `resource_code`: código del recurso del que saldrán las unidades.
+  - `resource_code`: código del recurso.
+  - `location`: ubicación de donde saldrán las unidades.
   - `quantity`: cantidad de unidades que se retirarán.
 
   ## Retorna
-  - `{:ok, updated_state, movement}`: si la salida se registra correctamente.
-  - `{:error, :empty_fields}`: si el código está vacío.
-  - `{:error, :invalid_quantity}`: si la cantidad no es positiva.
-  - `{:error, :resource_not_found}`: si el recurso no existe.
-  - `{:error, :insufficient_inventory}`: si no hay suficientes unidades.
-  - `{:error, :invalid_state}`: si el estado no tiene una estructura válida.
-  - `{:error, :invalid_arguments}`: si los argumentos son incorrectos.
+  - `{:ok, updated_state, movement}` si la salida es exitosa.
+  - `{:error, reason}` si ocurre un error.
   """
-  def register_exit(state, resource_code, quantity)
-      when is_map(state) and is_binary(resource_code) and is_integer(quantity) do
+  def register_exit(state, resource_code, location, quantity)
+      when is_map(state) and is_binary(resource_code) and
+             is_binary(location) and is_integer(quantity) do
     cond do
-      String.trim(resource_code) == "" ->
+      String.trim(resource_code) == "" or String.trim(location) == "" ->
         {:error, :empty_fields}
 
       quantity <= 0 ->
         {:error, :invalid_quantity}
 
       true ->
-        case {Map.fetch(state, :resources), Map.fetch(state, :resource_movements)} do
-          {{:ok, resources}, {:ok, movements}}
-          when is_map(resources) and is_list(movements) ->
-            case Map.fetch(resources, resource_code) do
-              {:ok, resource} ->
-                previous_quantity = resource.quantity
+        case {
+          Map.fetch(state, :resources),
+          Map.fetch(state, :resource_stocks),
+          Map.fetch(state, :resource_movements)
+        } do
+          {{:ok, resources}, {:ok, stocks}, {:ok, movements}}
+          when is_map(resources) and is_map(stocks) and is_list(movements) ->
+            stock_key = {resource_code, location}
+
+            cond do
+              not Map.has_key?(resources, resource_code) ->
+                {:error, :resource_not_found}
+
+              not Map.has_key?(stocks, stock_key) ->
+                {:error, :stock_not_found}
+
+              true ->
+                previous_quantity = Map.fetch!(stocks, stock_key)
 
                 if quantity > previous_quantity do
                   {:error, :insufficient_inventory}
                 else
                   new_quantity = previous_quantity - quantity
 
-                  updated_resource = %{resource | quantity: new_quantity}
-
                   movement = %{
                     type: :exit,
                     resource_code: resource_code,
+                    location: location,
                     quantity: quantity,
                     previous_quantity: previous_quantity,
                     new_quantity: new_quantity,
@@ -247,16 +275,13 @@ defmodule EmergencySystem.Resources.ResourceManager do
                   updated_state =
                     state
                     |> Map.put(
-                      :resources,
-                      Map.put(resources, resource_code, updated_resource)
+                      :resource_stocks,
+                      Map.put(stocks, stock_key, new_quantity)
                     )
                     |> Map.put(:resource_movements, movements ++ [movement])
 
                   {:ok, updated_state, movement}
                 end
-
-              :error ->
-                {:error, :resource_not_found}
             end
 
           _ ->
@@ -265,7 +290,7 @@ defmodule EmergencySystem.Resources.ResourceManager do
     end
   end
 
-  def register_exit(_state, _resource_code, _quantity),
+  def register_exit(_state, _resource_code, _location, _quantity),
     do: {:error, :invalid_arguments}
 
   # ==================================================
@@ -337,34 +362,59 @@ defmodule EmergencySystem.Resources.ResourceManager do
 
   def filter_by_category(_state, _category), do: {:error, :invalid_arguments}
 
+
   @doc """
-  Consulta los recursos registrados según su ubicación.
+  Consulta los recursos disponibles en una ubicación específica.
 
   ## Parámetros
   - `state`: estado actual del sistema.
   - `location`: código o nombre de la ubicación que se desea consultar.
 
   ## Retorna
-  - `{:ok, resources}`: lista de recursos encontrados.
-  - `{:error, :empty_fields}`: si la ubicación está vacía.
-  - `{:error, :invalid_state}`: si el estado no contiene recursos válidos.
-  - `{:error, :invalid_arguments}`: si los argumentos tienen tipos incorrectos.
+  - `{:ok, resources}` con los recursos encontrados, incluyendo su ubicación
+    y cantidad disponible.
+  - `{:error, reason}` si ocurre un error.
 
   ## Ejemplo
+
       iex> ResourceManager.filter_by_location(state, "Z001")
-      {:ok, [%{code: "R001", location: "Z001"}]}
+      {:ok, [%{code: "R001", name: "Agua potable", quantity: 200,
+               location: "Z001", ...}]}
   """
   def filter_by_location(state, location)
       when is_map(state) and is_binary(location) do
     if String.trim(location) == "" do
       {:error, :empty_fields}
     else
-      case Map.fetch(state, :resources) do
-        {:ok, resources} when is_map(resources) ->
+      case {
+        Map.fetch(state, :resources),
+        Map.fetch(state, :resource_stocks)
+      } do
+        {{:ok, resources}, {:ok, stocks}}
+        when is_map(resources) and is_map(stocks) ->
+
           filtered_resources =
-            resources
-            |> Map.values()
-            |> Enum.filter(fn resource -> resource.location == location end)
+            Enum.reduce(stocks, [], fn
+              {{resource_code, stock_location}, quantity}, acc
+              when stock_location == location ->
+                case Map.fetch(resources, resource_code) do
+                  {:ok, resource} ->
+                    resource_with_stock =
+                      Map.merge(resource, %{
+                        location: stock_location,
+                        quantity: quantity
+                      })
+
+                    [resource_with_stock | acc]
+
+                  :error ->
+                    acc
+                end
+
+              _, acc ->
+                acc
+            end)
+            |> Enum.reverse()
 
           {:ok, filtered_resources}
 
@@ -374,7 +424,8 @@ defmodule EmergencySystem.Resources.ResourceManager do
     end
   end
 
-  def filter_by_location(_state, _location), do: {:error, :invalid_arguments}
+  def filter_by_location(_state, _location),
+    do: {:error, :invalid_arguments}
 
   @doc """
   Consulta el historial de movimientos del inventario.
