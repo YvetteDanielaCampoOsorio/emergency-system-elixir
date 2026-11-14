@@ -73,6 +73,7 @@ defmodule EmergencySystem.Data do
       resources: %{},
       resource_stocks: %{},
       resource_movements: [],
+      resource_assignments: [],
       people: %{},
       messages: [],
       pets: %{},
