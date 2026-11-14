@@ -263,5 +263,4 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
     assert hd(state.messages).status == :pending
     assert hd(updated_state.messages).status == :delivered
   end
-
 end
