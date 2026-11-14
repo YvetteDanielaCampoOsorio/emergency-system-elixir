@@ -411,4 +411,146 @@ describe "register_entry/4" do
                ResourceManager.list_resource_movements(%{})
     end
   end
+
+  describe "transfer_resource/5" do
+    setup %{state: state} do
+      {:ok, updated_state, _resource} =
+        ResourceManager.register_resource(
+          state,
+          "R001",
+          "Agua potable",
+          :water,
+          200,
+          "litros",
+          "Z001",
+          "Agua para consumo"
+        )
+
+      %{state: updated_state}
+    end
+
+    test "transfers inventory between locations", %{state: state} do
+      assert {:ok, updated_state, movement} =
+               ResourceManager.transfer_resource(
+                 state, "R001", "Z001", "Z002", 30
+               )
+
+      assert updated_state.resource_stocks[{"R001", "Z001"}] == 170
+      assert updated_state.resource_stocks[{"R001", "Z002"}] == 30
+
+      assert movement.type == :transfer
+      assert movement.resource_code == "R001"
+      assert movement.origin == "Z001"
+      assert movement.destination == "Z002"
+      assert movement.quantity == 30
+
+      assert movement.previous_origin_quantity == 200
+      assert movement.new_origin_quantity == 170
+      assert movement.previous_destination_quantity == 0
+      assert movement.new_destination_quantity == 30
+
+      assert length(updated_state.resource_movements) == 1
+    end
+
+    test "allows transferring all available inventory", %{state: state} do
+      assert {:ok, updated_state, _movement} =
+               ResourceManager.transfer_resource(
+                 state, "R001", "Z001", "Z002", 200
+               )
+
+      assert updated_state.resource_stocks[{"R001", "Z001"}] == 0
+      assert updated_state.resource_stocks[{"R001", "Z002"}] == 200
+    end
+
+    test "adds transferred units to existing destination stock", %{state: state} do
+      state =
+        put_in(
+          state.resource_stocks[{"R001", "Z002"}],
+          50
+        )
+
+      assert {:ok, updated_state, _movement} =
+               ResourceManager.transfer_resource(
+                 state, "R001", "Z001", "Z002", 30
+               )
+
+      assert updated_state.resource_stocks[{"R001", "Z001"}] == 170
+      assert updated_state.resource_stocks[{"R001", "Z002"}] == 80
+    end
+
+    test "rejects a transfer greater than available inventory", %{state: state} do
+      assert {:error, :insufficient_inventory} =
+               ResourceManager.transfer_resource(
+                 state, "R001", "Z001", "Z002", 250
+               )
+
+      assert state.resource_stocks[{"R001", "Z001"}] == 200
+      assert state.resource_stocks[{"R001", "Z002"}] == nil
+      assert state.resource_movements == []
+    end
+
+    test "rejects a zero quantity", %{state: state} do
+      assert {:error, :invalid_quantity} =
+               ResourceManager.transfer_resource(
+                 state, "R001", "Z001", "Z002", 0
+               )
+    end
+
+    test "rejects a negative quantity", %{state: state} do
+      assert {:error, :invalid_quantity} =
+               ResourceManager.transfer_resource(
+                 state, "R001", "Z001", "Z002", -10
+               )
+    end
+
+    test "rejects an empty resource code", %{state: state} do
+      assert {:error, :empty_fields} =
+               ResourceManager.transfer_resource(
+                 state, " ", "Z001", "Z002", 30
+               )
+    end
+
+    test "rejects an empty origin", %{state: state} do
+      assert {:error, :empty_fields} =
+               ResourceManager.transfer_resource(
+                 state, "R001", " ", "Z002", 30
+               )
+    end
+
+    test "rejects an empty destination", %{state: state} do
+      assert {:error, :empty_fields} =
+               ResourceManager.transfer_resource(
+                 state, "R001", "Z001", " ", 30
+               )
+    end
+
+    test "rejects the same origin and destination", %{state: state} do
+      assert {:error, :same_location} =
+               ResourceManager.transfer_resource(
+                 state, "R001", "Z001", "Z001", 30
+               )
+    end
+
+    test "rejects a resource that does not exist", %{state: state} do
+      assert {:error, :resource_not_found} =
+               ResourceManager.transfer_resource(
+                 state, "R999", "Z001", "Z002", 30
+               )
+    end
+
+    test "rejects an origin without registered stock", %{state: state} do
+      assert {:error, :stock_not_found} =
+               ResourceManager.transfer_resource(
+                 state, "R001", "Z003", "Z002", 30
+               )
+    end
+
+    test "rejects an invalid state" do
+      assert {:error, :invalid_state} =
+               ResourceManager.transfer_resource(
+                 %{}, "R001", "Z001", "Z002", 30
+               )
+    end
+  end
+
 end

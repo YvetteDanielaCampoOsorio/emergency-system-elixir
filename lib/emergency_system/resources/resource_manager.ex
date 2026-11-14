@@ -292,6 +292,110 @@ defmodule EmergencySystem.Resources.ResourceManager do
 
   def register_exit(_state, _resource_code, _location, _quantity),
     do: {:error, :invalid_arguments}
+@doc """
+  Transfiere unidades de un recurso entre dos ubicaciones.
+
+  ## Parámetros
+  - `state`: estado actual del sistema.
+  - `resource_code`: código del recurso que se transferirá.
+  - `origin`: ubicación de origen.
+  - `destination`: ubicación de destino.
+  - `quantity`: cantidad de unidades que se transferirán.
+
+  ## Retorna
+  - `{:ok, updated_state, movement}` si la transferencia es exitosa.
+  - `{:error, reason}` si ocurre un error.
+
+  ## Ejemplo
+
+      iex> ResourceManager.transfer_resource(
+      ...>   state, "R001", "Z001", "Z002", 30
+      ...> )
+      {:ok, updated_state, movement}
+  """
+  def transfer_resource(state, resource_code, origin, destination, quantity)
+      when is_map(state) and is_binary(resource_code) and
+             is_binary(origin) and is_binary(destination) and
+             is_integer(quantity) do
+    cond do
+      String.trim(resource_code) == "" or
+          String.trim(origin) == "" or
+          String.trim(destination) == "" ->
+        {:error, :empty_fields}
+
+      origin == destination ->
+        {:error, :same_location}
+
+      quantity <= 0 ->
+        {:error, :invalid_quantity}
+
+      true ->
+        case {
+          Map.fetch(state, :resources),
+          Map.fetch(state, :resource_stocks),
+          Map.fetch(state, :resource_movements)
+        } do
+          {{:ok, resources}, {:ok, stocks}, {:ok, movements}}
+          when is_map(resources) and is_map(stocks) and is_list(movements) ->
+            origin_key = {resource_code, origin}
+            destination_key = {resource_code, destination}
+
+            cond do
+              not Map.has_key?(resources, resource_code) ->
+                {:error, :resource_not_found}
+
+              not Map.has_key?(stocks, origin_key) ->
+                {:error, :stock_not_found}
+
+              true ->
+                origin_quantity = Map.fetch!(stocks, origin_key)
+
+                if quantity > origin_quantity do
+                  {:error, :insufficient_inventory}
+                else
+                  destination_quantity = Map.get(stocks, destination_key, 0)
+
+                  updated_stocks =
+                    stocks
+                    |> Map.put(origin_key, origin_quantity - quantity)
+                    |> Map.put(destination_key, destination_quantity + quantity)
+
+                  movement = %{
+                    type: :transfer,
+                    resource_code: resource_code,
+                    origin: origin,
+                    destination: destination,
+                    quantity: quantity,
+                    previous_origin_quantity: origin_quantity,
+                    new_origin_quantity: origin_quantity - quantity,
+                    previous_destination_quantity: destination_quantity,
+                    new_destination_quantity: destination_quantity + quantity,
+                    timestamp: DateTime.utc_now()
+                  }
+
+                  updated_state =
+                    state
+                    |> Map.put(:resource_stocks, updated_stocks)
+                    |> Map.put(:resource_movements, movements ++ [movement])
+
+                  {:ok, updated_state, movement}
+                end
+            end
+
+          _ ->
+            {:error, :invalid_state}
+        end
+    end
+  end
+
+  def transfer_resource(
+        _state,
+        _resource_code,
+        _origin,
+        _destination,
+        _quantity
+      ),
+      do: {:error, :invalid_arguments}
 
   # ==================================================
   # CONSULTA DE RECURSOS
