@@ -64,7 +64,7 @@ defmodule EmergencySystem.Shelters.ShelterManager do
   No se permiten ingresos duplicados ni superar la capacidad.
   """
   def register_entry(state, shelter_code, document) do
-    with true <- valid_state?(state) || {:error, :invalid_state},
+    with true <- valid_state?(state) || {:error, :invalid_state}, 
          true <- valid_text?(shelter_code) and valid_text?(document) ||
                    {:error, :invalid_fields},
          {:ok, shelter} <- find_shelter(state, shelter_code),
