@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Processes.StateServer do
   use GenServer
 

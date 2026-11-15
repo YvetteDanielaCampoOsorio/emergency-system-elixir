@@ -12,14 +12,10 @@ defmodule EmergencySystem.Processes.NeedServerTest do
       |> put_in([:users, "reporter"], %{username: "reporter"})
 
     state_server =
-      start_supervised!(
-        {StateServer, initial_state: initial_state}
-      )
+      start_supervised!({StateServer, initial_state: initial_state})
 
     need_server =
-      start_supervised!(
-        {NeedServer, state_server: state_server}
-      )
+      start_supervised!({NeedServer, state_server: state_server})
 
     %{need_server: need_server}
   end
@@ -57,8 +53,9 @@ defmodule EmergencySystem.Processes.NeedServerTest do
     ]
 
     assert {:ok, _need} = apply(NeedServer, :register_need, [server | args])
+
     assert {:error, :need_already_exists} =
-         apply(NeedServer, :register_need, [server | args])
+             apply(NeedServer, :register_need, [server | args])
   end
 
   # ============================================================
@@ -68,8 +65,14 @@ defmodule EmergencySystem.Processes.NeedServerTest do
   test "consulta las necesidades registradas", %{need_server: server} do
     assert {:ok, _need} =
              NeedServer.register_need(
-               server, "N001", "water", "Agua potable",
-               50, "Z001", :high, "reporter"
+               server,
+               "N001",
+               "water",
+               "Agua potable",
+               50,
+               "Z001",
+               :high,
+               "reporter"
              )
 
     assert {:ok, needs} = NeedServer.list_needs(server)
@@ -81,8 +84,14 @@ defmodule EmergencySystem.Processes.NeedServerTest do
   test "filtra las necesidades por zona", %{need_server: server} do
     assert {:ok, _need} =
              NeedServer.register_need(
-               server, "N001", "water", "Agua potable",
-               50, "Z001", :high, "reporter"
+               server,
+               "N001",
+               "water",
+               "Agua potable",
+               50,
+               "Z001",
+               :high,
+               "reporter"
              )
 
     assert {:ok, needs} =
@@ -98,8 +107,14 @@ defmodule EmergencySystem.Processes.NeedServerTest do
   test "actualiza el estado de una necesidad", %{need_server: server} do
     assert {:ok, _need} =
              NeedServer.register_need(
-               server, "N001", "water", "Agua potable",
-               50, "Z001", :high, "reporter"
+               server,
+               "N001",
+               "water",
+               "Agua potable",
+               50,
+               "Z001",
+               :high,
+               "reporter"
              )
 
     assert {:ok, updated_need} =

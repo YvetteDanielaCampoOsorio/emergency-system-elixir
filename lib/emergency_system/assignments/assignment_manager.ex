@@ -46,23 +46,27 @@ defmodule EmergencySystem.Assignments.AssignmentManager do
     stock_key = {resource_code, location}
 
     with true <- valid_state?(state) || {:error, :invalid_state},
-         true <- valid_fields?(need_id, resource_code, location) ||
-                   {:error, :empty_fields},
-         true <- is_integer(quantity) and quantity > 0 ||
-                   {:error, :invalid_quantity},
+         true <-
+           valid_fields?(need_id, resource_code, location) ||
+             {:error, :empty_fields},
+         true <-
+           (is_integer(quantity) and quantity > 0) ||
+             {:error, :invalid_quantity},
          {:ok, need} <- fetch_record(state.needs, need_id, :need_not_found),
          {:ok, resource} <-
            fetch_record(state.resources, resource_code, :resource_not_found),
          {:ok, available} <- fetch_stock(state.resource_stocks, stock_key),
          true <- valid_need_status?(need) || {:error, :invalid_need_status},
-         true <- resource_matches_need?(resource, need) ||
-                   {:error, :resource_type_mismatch},
+         true <-
+           resource_matches_need?(resource, need) ||
+             {:error, :resource_type_mismatch},
          true <- quantity <= available || {:error, :insufficient_inventory},
          assigned_quantity <-
            assigned_quantity(state.resource_assignments, need_id),
          remaining_quantity <- need.quantity - assigned_quantity,
-         true <- quantity <= remaining_quantity ||
-                   {:error, :exceeds_need_quantity} do
+         true <-
+           quantity <= remaining_quantity ||
+             {:error, :exceeds_need_quantity} do
       create_assignment(
         state,
         need,
@@ -201,5 +205,4 @@ defmodule EmergencySystem.Assignments.AssignmentManager do
 
     {:ok, updated_state, assignment}
   end
-
 end

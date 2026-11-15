@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Shelters.ShelterManagerTest do
   use ExUnit.Case, async: true
 
@@ -46,7 +45,6 @@ defmodule EmergencySystem.Shelters.ShelterManagerTest do
 
     state
   end
-
 
   # PRUEBAS DE REGISTRO
 
@@ -394,5 +392,4 @@ defmodule EmergencySystem.Shelters.ShelterManagerTest do
       assert shelter.available_capacity == 10
     end
   end
-
 end

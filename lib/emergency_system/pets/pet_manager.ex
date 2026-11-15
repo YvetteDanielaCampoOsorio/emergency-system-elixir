@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Pets.PetManager do
   @moduledoc """
   Gestiona los reportes de mascotas perdidas y encontradas durante
@@ -59,21 +58,24 @@ defmodule EmergencySystem.Pets.PetManager do
       ) do
     with true <- valid_state?(state) || {:error, :invalid_state},
          true <- valid_text?(id) || {:error, :invalid_id},
-         true <- report_type in @valid_report_types ||
-                   {:error, :invalid_report_type},
+         true <-
+           report_type in @valid_report_types ||
+             {:error, :invalid_report_type},
          true <- valid_text?(species) || {:error, :invalid_species},
          true <- valid_optional_text?(name) || {:error, :invalid_name},
-         true <- valid_text?(characteristics) ||
-                   {:error, :invalid_characteristics},
+         true <-
+           valid_text?(characteristics) ||
+             {:error, :invalid_characteristics},
          true <- valid_text?(color) || {:error, :invalid_color},
          true <- valid_text?(size) || {:error, :invalid_size},
          true <- valid_text?(zone_code) || {:error, :invalid_zone},
          true <- valid_text?(contact) || {:error, :invalid_contact},
-         true <- Map.has_key?(state.zones, zone_code) ||
-                   {:error, :zone_not_found},
-         true <- not Map.has_key?(state.pets, id) ||
-                   {:error, :duplicate_pet} do
-
+         true <-
+           Map.has_key?(state.zones, zone_code) ||
+             {:error, :zone_not_found},
+         true <-
+           not Map.has_key?(state.pets, id) ||
+             {:error, :duplicate_pet} do
       pet = %{
         id: id,
         report_type: report_type,
@@ -89,8 +91,8 @@ defmodule EmergencySystem.Pets.PetManager do
       }
 
       updated_state = %{
-        state |
-        pets: Map.put(state.pets, id, pet)
+        state
+        | pets: Map.put(state.pets, id, pet)
       }
 
       {:ok, updated_state, pet}
@@ -124,7 +126,6 @@ defmodule EmergencySystem.Pets.PetManager do
     with true <- valid_state?(state) || {:error, :invalid_state},
          true <- is_map(filters) || {:error, :invalid_filters},
          true <- valid_filters?(filters) || {:error, :invalid_filters} do
-
       pets =
         state.pets
         |> Map.values()
@@ -169,15 +170,15 @@ defmodule EmergencySystem.Pets.PetManager do
   def update_pet_status(state, pet_id, new_status) do
     with true <- valid_state?(state) || {:error, :invalid_state},
          true <- valid_text?(pet_id) || {:error, :invalid_id},
-         true <- new_status in @valid_statuses ||
-                   {:error, :invalid_status},
+         true <-
+           new_status in @valid_statuses ||
+             {:error, :invalid_status},
          {:ok, pet} <- find_pet(state.pets, pet_id) do
-
       updated_pet = %{pet | status: new_status}
 
       updated_state = %{
-        state |
-        pets: Map.put(state.pets, pet_id, updated_pet)
+        state
+        | pets: Map.put(state.pets, pet_id, updated_pet)
       }
 
       {:ok, updated_state, updated_pet}
@@ -211,17 +212,21 @@ defmodule EmergencySystem.Pets.PetManager do
 
   def calculate_similarity(lost_pet, found_pet)
       when is_map(lost_pet) and is_map(found_pet) do
-    with true <- valid_pet_report?(lost_pet) and valid_pet_report?(found_pet) ||
-                   {:error, :invalid_report},
-         true <- lost_pet.report_type == :lost ||
-                   {:error, :invalid_report_type},
-         true <- found_pet.report_type == :found ||
-                   {:error, :invalid_report_type},
-         true <- lost_pet.status != :resolved and found_pet.status != :resolved ||
-                   {:error, :resolved_report},
-         true <- same_species?(lost_pet, found_pet) ||
-                   {:error, :different_species} do
-
+    with true <-
+           (valid_pet_report?(lost_pet) and valid_pet_report?(found_pet)) ||
+             {:error, :invalid_report},
+         true <-
+           lost_pet.report_type == :lost ||
+             {:error, :invalid_report_type},
+         true <-
+           found_pet.report_type == :found ||
+             {:error, :invalid_report_type},
+         true <-
+           (lost_pet.status != :resolved and found_pet.status != :resolved) ||
+             {:error, :resolved_report},
+         true <-
+           same_species?(lost_pet, found_pet) ||
+             {:error, :different_species} do
       attributes = [
         {lost_pet.color, found_pet.color, 25},
         {lost_pet.size, found_pet.size, 20},
@@ -310,9 +315,9 @@ defmodule EmergencySystem.Pets.PetManager do
   """
   def find_possible_matches(state, min_score \\ 70) do
     with true <- valid_state?(state) || {:error, :invalid_state},
-         true <- is_integer(min_score) and min_score >= 0 and min_score <= 100 ||
-                   {:error, :invalid_score} do
-
+         true <-
+           (is_integer(min_score) and min_score >= 0 and min_score <= 100) ||
+             {:error, :invalid_score} do
       pets = Map.values(state.pets)
 
       lost_pets =
@@ -367,16 +372,17 @@ defmodule EmergencySystem.Pets.PetManager do
 
   def confirm_match(state, lost_pet_id, found_pet_id) do
     with true <- valid_state?(state) || {:error, :invalid_state},
-         true <- valid_text?(lost_pet_id) and valid_text?(found_pet_id) ||
-                   {:error, :invalid_id},
+         true <-
+           (valid_text?(lost_pet_id) and valid_text?(found_pet_id)) ||
+             {:error, :invalid_id},
          true <- lost_pet_id != found_pet_id || {:error, :same_report},
          {:ok, lost_pet} <- find_pet(state.pets, lost_pet_id),
          {:ok, found_pet} <- find_pet(state.pets, found_pet_id),
          true <- lost_pet.report_type == :lost || {:error, :invalid_lost_report},
          true <- found_pet.report_type == :found || {:error, :invalid_found_report},
-         true <- lost_pet.status != :resolved and found_pet.status != :resolved ||
-                   {:error, :resolved_report} do
-
+         true <-
+           (lost_pet.status != :resolved and found_pet.status != :resolved) ||
+             {:error, :resolved_report} do
       updated_lost_pet = %{lost_pet | status: :resolved}
       updated_found_pet = %{found_pet | status: :resolved}
 
@@ -393,7 +399,6 @@ defmodule EmergencySystem.Pets.PetManager do
       false -> {:error, :invalid_data}
     end
   end
-
 
   # ============================================================
   # FUNCIONES AUXILIARES
@@ -421,5 +426,4 @@ defmodule EmergencySystem.Pets.PetManager do
       _ -> false
     end)
   end
-
 end

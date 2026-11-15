@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Persistence.StorageTest do
   use ExUnit.Case, async: true
 
@@ -84,9 +83,9 @@ defmodule EmergencySystem.Persistence.StorageTest do
     assert MapSet.member?(recovered_state.active_users, "usuario1")
 
     assert Map.has_key?(
-      recovered_state.resource_stocks,
-      {"R001", "centro_norte"}
-    )
+             recovered_state.resource_stocks,
+             {"R001", "centro_norte"}
+           )
 
     [activity | _] = recovered_state.activity_log
 

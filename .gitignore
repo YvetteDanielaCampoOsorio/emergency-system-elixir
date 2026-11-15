@@ -22,3 +22,5 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 emergency_system-*.tar
 
+# ElixirLS editor data
+/.elixir_ls/

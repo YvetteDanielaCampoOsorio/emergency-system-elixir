@@ -35,40 +35,52 @@ El sistema utiliza programación funcional y mecanismos de concurrencia de Elixi
 
 ## Instalación y ejecución
 
-Requisitos:
+### Requisitos
+
 - Elixir.
 - Erlang/OTP.
 - Git.
 
-Clonar el repositorio:
+### Clonar el repositorio
 
 ```bash
 git clone URL_DEL_REPOSITORIO
+cd NOMBRE_DEL_REPOSITORIO
 ```
 
-Entrar al proyecto:
-
-```bash
-cd emergency-system-elixir
-```
-
-Instalar dependencias:
+### Instalar dependencias
 
 ```bash
 mix deps.get
 ```
 
-Compilar:
+### Compilar el proyecto
 
 ```bash
 mix compile
 ```
 
-Ejecutar las pruebas:
+### Ejecutar las pruebas
 
 ```bash
 mix test
 ```
+
+### Ejecutar la demostración
+
+```bash
+mix run demo.exs
+```
+
+La demostración permite observar el inicio del supervisor, el registro de una zona, un usuario, una necesidad y un recurso, además de la asignación de inventario y el control de disponibilidad.
+
+## Pruebas de concurrencia
+
+El proyecto incluye pruebas para verificar que las operaciones simultáneas mantengan la consistencia del estado, especialmente en:
+
+- Asignación de recursos sin superar el inventario disponible.
+- Actualización de reportes de personas sin resolverlos dos veces.
+- Confirmación de coincidencias entre reportes de mascotas sin resolverlos dos veces.
 
 ## Equipo de trabajo
 

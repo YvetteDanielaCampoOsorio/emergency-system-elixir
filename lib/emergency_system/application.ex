@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Application do
   use Application
 

@@ -56,18 +56,21 @@ defmodule EmergencySystem.People.PersonManager do
   """
   def register_person(state, id, name, reference, age, zone_code, status) do
     with true <- valid_state?(state) || {:error, :invalid_state},
-         true <- valid_fields?(id, name, reference, zone_code) ||
-                   {:error, :empty_fields},
-         true <- is_integer(age) and age >= 0 ||
-                   {:error, :invalid_age},
-         true <- status in @valid_statuses ||
-                   {:error, :invalid_status},
-
-        true <- not Map.has_key?(state.people, id) ||
-                  {:error, :duplicate_person},
-
-         true <- Map.has_key?(state.zones, zone_code) ||
-                   {:error, :zone_not_found} do
+         true <-
+           valid_fields?(id, name, reference, zone_code) ||
+             {:error, :empty_fields},
+         true <-
+           (is_integer(age) and age >= 0) ||
+             {:error, :invalid_age},
+         true <-
+           status in @valid_statuses ||
+             {:error, :invalid_status},
+         true <-
+           not Map.has_key?(state.people, id) ||
+             {:error, :duplicate_person},
+         true <-
+           Map.has_key?(state.zones, zone_code) ||
+             {:error, :zone_not_found} do
       person = %{
         id: id,
         name: name,
@@ -174,7 +177,9 @@ defmodule EmergencySystem.People.PersonManager do
   defp matches_filters?(person, filters) do
     name_matches =
       case Map.get(filters, :name) do
-        nil -> true
+        nil ->
+          true
+
         name ->
           String.contains?(
             String.downcase(person.name),
@@ -225,14 +230,16 @@ defmodule EmergencySystem.People.PersonManager do
   """
   def update_person_status(state, person_id, new_status) do
     with true <- valid_state?(state) || {:error, :invalid_state},
-         true <- is_binary(person_id) and person_id != "" ||
-                   {:error, :invalid_id},
-         true <- new_status in @valid_statuses ||
-                   {:error, :invalid_status},
+         true <-
+           (is_binary(person_id) and person_id != "") ||
+             {:error, :invalid_id},
+         true <-
+           new_status in @valid_statuses ||
+             {:error, :invalid_status},
          {:ok, person} <- find_person(state, person_id),
-         true <- new_status in Map.get(@valid_transitions, person.status, []) ||
-                   {:error, :invalid_transition} do
-
+         true <-
+           new_status in Map.get(@valid_transitions, person.status, []) ||
+             {:error, :invalid_transition} do
       updated_person = Map.put(person, :status, new_status)
 
       updated_people =
@@ -270,5 +277,4 @@ defmodule EmergencySystem.People.PersonManager do
       :error -> {:error, :person_not_found}
     end
   end
-
 end

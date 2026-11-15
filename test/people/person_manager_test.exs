@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.People.PersonManagerTest do
   use ExUnit.Case
 
@@ -8,17 +7,15 @@ defmodule EmergencySystem.People.PersonManagerTest do
   # ESTADO DE PRUEBA
   # --------------------------------------------------
 
-
-defp initial_state do
-  %{
-    people: %{},
-    zones: %{
-      "Z001" => %{code: "Z001", name: "Zona norte"},
-      "Z002" => %{code: "Z002", name: "Zona sur"}
+  defp initial_state do
+    %{
+      people: %{},
+      zones: %{
+        "Z001" => %{code: "Z001", name: "Zona norte"},
+        "Z002" => %{code: "Z002", name: "Zona sur"}
+      }
     }
-  }
-end
-
+  end
 
   # --------------------------------------------------
   # PRUEBAS DE REGISTRO
@@ -421,5 +418,4 @@ end
     assert state.people["P001"].status == :reported
     assert updated_state.people["P001"].status == :located
   end
-
 end

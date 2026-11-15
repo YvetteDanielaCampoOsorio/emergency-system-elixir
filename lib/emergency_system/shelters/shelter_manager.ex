@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Shelters.ShelterManager do
   @moduledoc """
   Gestiona el registro, consulta y ocupación de los albergues.
@@ -25,15 +24,18 @@ defmodule EmergencySystem.Shelters.ShelterManager do
   """
   def register_shelter(state, code, name, zone_code, capacity) do
     with true <- valid_state?(state) || {:error, :invalid_state},
-         true <- valid_text?(code) and valid_text?(name) and
-                   valid_text?(zone_code) || {:error, :invalid_fields},
-         true <- is_integer(capacity) and capacity > 0 ||
-                   {:error, :invalid_capacity},
-         true <- Map.has_key?(state.zones, zone_code) ||
-                   {:error, :zone_not_found},
-         true <- not Map.has_key?(state.shelters, code) ||
-                   {:error, :duplicate_shelter} do
-
+         true <-
+           (valid_text?(code) and valid_text?(name) and
+              valid_text?(zone_code)) || {:error, :invalid_fields},
+         true <-
+           (is_integer(capacity) and capacity > 0) ||
+             {:error, :invalid_capacity},
+         true <-
+           Map.has_key?(state.zones, zone_code) ||
+             {:error, :zone_not_found},
+         true <-
+           not Map.has_key?(state.shelters, code) ||
+             {:error, :duplicate_shelter} do
       shelter = %{
         code: code,
         name: name,
@@ -64,26 +66,28 @@ defmodule EmergencySystem.Shelters.ShelterManager do
   No se permiten ingresos duplicados ni superar la capacidad.
   """
   def register_entry(state, shelter_code, document) do
-    with true <- valid_state?(state) || {:error, :invalid_state}, 
-         true <- valid_text?(shelter_code) and valid_text?(document) ||
-                   {:error, :invalid_fields},
+    with true <- valid_state?(state) || {:error, :invalid_state},
+         true <-
+           (valid_text?(shelter_code) and valid_text?(document)) ||
+             {:error, :invalid_fields},
          {:ok, shelter} <- find_shelter(state, shelter_code),
          {:ok, person} <- find_person_by_document(state, document),
-         true <- not MapSet.member?(shelter.occupants, document) ||
-          {:error, :person_already_inside},
-         true <- shelter.occupancy < shelter.capacity ||
-                   {:error, :shelter_full},
+         true <-
+           not MapSet.member?(shelter.occupants, document) ||
+             {:error, :person_already_inside},
+         true <-
+           shelter.occupancy < shelter.capacity ||
+             {:error, :shelter_full},
          {:ok, person_state, updated_person} <-
            PersonManager.update_person_status(
              state,
              person.id,
              :in_shelter
            ) do
-
       updated_shelter = %{
-        shelter |
-        occupancy: shelter.occupancy + 1,
-        occupants: MapSet.put(shelter.occupants, document)
+        shelter
+        | occupancy: shelter.occupancy + 1,
+          occupants: MapSet.put(shelter.occupants, document)
       }
 
       updated_shelters =
@@ -109,13 +113,16 @@ defmodule EmergencySystem.Shelters.ShelterManager do
   """
   def register_exit(state, shelter_code, document, destination_status) do
     with true <- valid_state?(state) || {:error, :invalid_state},
-         true <- valid_text?(shelter_code) and valid_text?(document) ||
-                   {:error, :invalid_fields},
-         true <- destination_status in [:transferred, :reunified] ||
-                   {:error, :invalid_destination_status},
+         true <-
+           (valid_text?(shelter_code) and valid_text?(document)) ||
+             {:error, :invalid_fields},
+         true <-
+           destination_status in [:transferred, :reunified] ||
+             {:error, :invalid_destination_status},
          {:ok, shelter} <- find_shelter(state, shelter_code),
-         true <- MapSet.member?(shelter.occupants, document) ||
-                   {:error, :person_not_in_shelter},
+         true <-
+           MapSet.member?(shelter.occupants, document) ||
+             {:error, :person_not_in_shelter},
          {:ok, person} <- find_person_by_document(state, document),
          {:ok, person_state, updated_person} <-
            PersonManager.update_person_status(
@@ -123,11 +130,10 @@ defmodule EmergencySystem.Shelters.ShelterManager do
              person.id,
              destination_status
            ) do
-
       updated_shelter = %{
-        shelter |
-        occupancy: shelter.occupancy - 1,
-        occupants: MapSet.delete(shelter.occupants, document)
+        shelter
+        | occupancy: shelter.occupancy - 1,
+          occupants: MapSet.delete(shelter.occupants, document)
       }
 
       updated_shelters =

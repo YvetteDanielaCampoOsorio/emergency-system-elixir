@@ -246,45 +246,59 @@ defmodule EmergencySystem.Zones.ZoneManagerTest do
                ZoneManager.list_all_attention_points(nil)
     end
 
-test "recorre puntos de diferentes zonas y sectores", %{state: state} do
-  {:ok, state, _} =
-    ZoneManager.create_zone(state, "Z001", "Centro", :high, 100)
+    test "recorre puntos de diferentes zonas y sectores", %{state: state} do
+      {:ok, state, _} =
+        ZoneManager.create_zone(state, "Z001", "Centro", :high, 100)
 
-  {:ok, state, _} =
-    ZoneManager.create_zone(state, "Z002", "Norte", :medium, 80)
+      {:ok, state, _} =
+        ZoneManager.create_zone(state, "Z002", "Norte", :medium, 80)
 
-  {:ok, state, _} =
-    ZoneManager.add_sector(state, "Z001", "S001", "Sector 1", 50)
+      {:ok, state, _} =
+        ZoneManager.add_sector(state, "Z001", "S001", "Sector 1", 50)
 
-  {:ok, state, _} =
-    ZoneManager.add_sector(state, "Z001", "S002", "Sector 2", 50)
+      {:ok, state, _} =
+        ZoneManager.add_sector(state, "Z001", "S002", "Sector 2", 50)
 
-  {:ok, state, _} =
-    ZoneManager.add_sector(state, "Z002", "S003", "Sector 3", 80)
+      {:ok, state, _} =
+        ZoneManager.add_sector(state, "Z002", "S003", "Sector 3", 80)
 
-  {:ok, state, _} =
-    ZoneManager.add_attention_point(
-      state, "Z001", "S001", "P001", "Auxilios", "Puesto médico"
-    )
+      {:ok, state, _} =
+        ZoneManager.add_attention_point(
+          state,
+          "Z001",
+          "S001",
+          "P001",
+          "Auxilios",
+          "Puesto médico"
+        )
 
-  {:ok, state, _} =
-    ZoneManager.add_attention_point(
-      state, "Z001", "S002", "P002", "Agua", "Distribución"
-    )
+      {:ok, state, _} =
+        ZoneManager.add_attention_point(
+          state,
+          "Z001",
+          "S002",
+          "P002",
+          "Agua",
+          "Distribución"
+        )
 
-  {:ok, state, _} =
-    ZoneManager.add_attention_point(
-      state, "Z002", "S003", "P003", "Rescate", "Punto de rescate"
-    )
+      {:ok, state, _} =
+        ZoneManager.add_attention_point(
+          state,
+          "Z002",
+          "S003",
+          "P003",
+          "Rescate",
+          "Punto de rescate"
+        )
 
-  assert {:ok, points} = ZoneManager.list_all_attention_points(state)
+      assert {:ok, points} = ZoneManager.list_all_attention_points(state)
 
-  assert length(points) == 3
+      assert length(points) == 3
 
-  assert Enum.map(points, & &1.point.code) |> Enum.sort() ==
-           ["P001", "P002", "P003"]
-end
-
+      assert Enum.map(points, & &1.point.code) |> Enum.sort() ==
+               ["P001", "P002", "P003"]
+    end
   end
 
   describe "zone_statistics/2" do

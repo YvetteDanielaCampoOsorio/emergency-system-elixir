@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Persistence.Storage do
   @moduledoc """
   Gestiona la persistencia del sistema de emergencias mediante
@@ -37,7 +36,6 @@ defmodule EmergencySystem.Persistence.Storage do
   def save(state, path) do
     with true <- valid_state?(state) || {:error, :invalid_state},
          true <- valid_path?(path) || {:error, :invalid_path} do
-
       encoded_state =
         state
         |> :erlang.term_to_binary()
@@ -74,14 +72,14 @@ defmodule EmergencySystem.Persistence.Storage do
   def load(path) do
     with true <- valid_path?(path) || {:error, :invalid_path},
          {:ok, content} <- File.read(path),
-         true <- String.starts_with?(content, @file_header) ||
-                   {:error, :invalid_file_format},
+         true <-
+           String.starts_with?(content, @file_header) ||
+             {:error, :invalid_file_format},
          encoded_state <-
            String.replace_prefix(content, @file_header, ""),
-            {:ok, binary_state} <- decode_content(encoded_state),
+         {:ok, binary_state} <- decode_content(encoded_state),
          state <- :erlang.binary_to_term(binary_state, [:safe]),
          true <- valid_state?(state) || {:error, :invalid_state} do
-
       {:ok, state}
     else
       {:error, reason} -> {:error, reason}
@@ -144,7 +142,6 @@ defmodule EmergencySystem.Persistence.Storage do
     is_binary(path) and String.trim(path) != ""
   end
 
-
   # ============================================================
   # DECODIFICACIÓN
   # ============================================================
@@ -156,5 +153,4 @@ defmodule EmergencySystem.Persistence.Storage do
       :error -> {:error, :corrupted_file}
     end
   end
-
 end

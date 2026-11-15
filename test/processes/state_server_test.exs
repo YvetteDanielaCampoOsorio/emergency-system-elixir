@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Processes.StateServerTest do
   use ExUnit.Case, async: true
 
@@ -33,7 +32,7 @@ defmodule EmergencySystem.Processes.StateServerTest do
 
   test "rechaza un estado inicial inválido" do
     assert {:error, :invalid_initial_state} =
-            GenServer.start(StateServer, %{})
+             GenServer.start(StateServer, %{})
   end
 
   # ============================================================

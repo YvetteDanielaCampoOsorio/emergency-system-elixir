@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Pets.PetManagerTest do
   use ExUnit.Case
 
@@ -23,9 +22,16 @@ defmodule EmergencySystem.Pets.PetManagerTest do
 
     assert {:ok, updated_state, pet} =
              PetManager.register_pet(
-               state, "PET001", :lost, "perro", "Luna",
-               "Mancha blanca en el pecho", "negro",
-               "mediano", "Z001", "Laura"
+               state,
+               "PET001",
+               :lost,
+               "perro",
+               "Luna",
+               "Mancha blanca en el pecho",
+               "negro",
+               "mediano",
+               "Z001",
+               "Laura"
              )
 
     assert pet.id == "PET001"
@@ -42,9 +48,16 @@ defmodule EmergencySystem.Pets.PetManagerTest do
 
     assert {:ok, updated_state, pet} =
              PetManager.register_pet(
-               state, "PET002", :found, "gato", nil,
-               "Tiene una pata blanca", "gris",
-               "pequeño", "Z002", "Carlos"
+               state,
+               "PET002",
+               :found,
+               "gato",
+               nil,
+               "Tiene una pata blanca",
+               "gris",
+               "pequeño",
+               "Z002",
+               "Carlos"
              )
 
     assert pet.report_type == :found
@@ -56,56 +69,112 @@ defmodule EmergencySystem.Pets.PetManagerTest do
   test "rejects an empty pet identifier" do
     assert {:error, :invalid_id} =
              PetManager.register_pet(
-               initial_state(), "", :lost, "perro", "Luna",
-               "Mancha blanca", "negro", "mediano", "Z001", "Laura"
+               initial_state(),
+               "",
+               :lost,
+               "perro",
+               "Luna",
+               "Mancha blanca",
+               "negro",
+               "mediano",
+               "Z001",
+               "Laura"
              )
   end
 
   test "rejects an invalid report type" do
     assert {:error, :invalid_report_type} =
              PetManager.register_pet(
-               initial_state(), "PET003", :unknown, "perro", "Luna",
-               "Mancha blanca", "negro", "mediano", "Z001", "Laura"
+               initial_state(),
+               "PET003",
+               :unknown,
+               "perro",
+               "Luna",
+               "Mancha blanca",
+               "negro",
+               "mediano",
+               "Z001",
+               "Laura"
              )
   end
 
   test "rejects an empty species" do
     assert {:error, :invalid_species} =
              PetManager.register_pet(
-               initial_state(), "PET004", :lost, "", "Luna",
-               "Mancha blanca", "negro", "mediano", "Z001", "Laura"
+               initial_state(),
+               "PET004",
+               :lost,
+               "",
+               "Luna",
+               "Mancha blanca",
+               "negro",
+               "mediano",
+               "Z001",
+               "Laura"
              )
   end
 
   test "rejects an empty characteristics description" do
     assert {:error, :invalid_characteristics} =
              PetManager.register_pet(
-               initial_state(), "PET005", :lost, "perro", "Luna",
-               "", "negro", "mediano", "Z001", "Laura"
+               initial_state(),
+               "PET005",
+               :lost,
+               "perro",
+               "Luna",
+               "",
+               "negro",
+               "mediano",
+               "Z001",
+               "Laura"
              )
   end
 
   test "rejects an empty color" do
     assert {:error, :invalid_color} =
              PetManager.register_pet(
-               initial_state(), "PET006", :lost, "perro", "Luna",
-               "Mancha blanca", "", "mediano", "Z001", "Laura"
+               initial_state(),
+               "PET006",
+               :lost,
+               "perro",
+               "Luna",
+               "Mancha blanca",
+               "",
+               "mediano",
+               "Z001",
+               "Laura"
              )
   end
 
   test "rejects an empty size" do
     assert {:error, :invalid_size} =
              PetManager.register_pet(
-               initial_state(), "PET007", :lost, "perro", "Luna",
-               "Mancha blanca", "negro", "", "Z001", "Laura"
+               initial_state(),
+               "PET007",
+               :lost,
+               "perro",
+               "Luna",
+               "Mancha blanca",
+               "negro",
+               "",
+               "Z001",
+               "Laura"
              )
   end
 
   test "rejects a nonexistent zone" do
     assert {:error, :zone_not_found} =
              PetManager.register_pet(
-               initial_state(), "PET008", :lost, "perro", "Luna",
-               "Mancha blanca", "negro", "mediano", "Z999", "Laura"
+               initial_state(),
+               "PET008",
+               :lost,
+               "perro",
+               "Luna",
+               "Mancha blanca",
+               "negro",
+               "mediano",
+               "Z999",
+               "Laura"
              )
   end
 
@@ -114,14 +183,30 @@ defmodule EmergencySystem.Pets.PetManagerTest do
 
     assert {:ok, state, _pet} =
              PetManager.register_pet(
-               state, "PET009", :lost, "perro", "Luna",
-               "Mancha blanca", "negro", "mediano", "Z001", "Laura"
+               state,
+               "PET009",
+               :lost,
+               "perro",
+               "Luna",
+               "Mancha blanca",
+               "negro",
+               "mediano",
+               "Z001",
+               "Laura"
              )
 
     assert {:error, :duplicate_pet} =
              PetManager.register_pet(
-               state, "PET009", :found, "perro", nil,
-               "Mancha blanca", "negro", "mediano", "Z001", "Carlos"
+               state,
+               "PET009",
+               :found,
+               "perro",
+               nil,
+               "Mancha blanca",
+               "negro",
+               "mediano",
+               "Z001",
+               "Carlos"
              )
   end
 
@@ -130,8 +215,16 @@ defmodule EmergencySystem.Pets.PetManagerTest do
 
     assert {:ok, updated_state, _pet} =
              PetManager.register_pet(
-               state, "PET010", :lost, "perro", "Luna",
-               "Mancha blanca", "negro", "mediano", "Z001", "Laura"
+               state,
+               "PET010",
+               :lost,
+               "perro",
+               "Luna",
+               "Mancha blanca",
+               "negro",
+               "mediano",
+               "Z001",
+               "Laura"
              )
 
     assert state.pets == %{}
@@ -147,20 +240,44 @@ defmodule EmergencySystem.Pets.PetManagerTest do
 
     {:ok, state, _pet} =
       PetManager.register_pet(
-        state, "PET020", :lost, "perro", "Luna",
-        "Mancha blanca", "negro", "mediano", "Z001", "Laura"
+        state,
+        "PET020",
+        :lost,
+        "perro",
+        "Luna",
+        "Mancha blanca",
+        "negro",
+        "mediano",
+        "Z001",
+        "Laura"
       )
 
     {:ok, state, _pet} =
       PetManager.register_pet(
-        state, "PET021", :found, "gato", nil,
-        "Pata blanca", "gris", "pequeño", "Z002", "Carlos"
+        state,
+        "PET021",
+        :found,
+        "gato",
+        nil,
+        "Pata blanca",
+        "gris",
+        "pequeño",
+        "Z002",
+        "Carlos"
       )
 
     {:ok, state, _pet} =
       PetManager.register_pet(
-        state, "PET022", :lost, "perro", "Max",
-        "Orejas largas", "café", "grande", "Z002", "Maria"
+        state,
+        "PET022",
+        :lost,
+        "perro",
+        "Max",
+        "Orejas largas",
+        "café",
+        "grande",
+        "Z002",
+        "Maria"
       )
 
     state
@@ -175,7 +292,8 @@ defmodule EmergencySystem.Pets.PetManagerTest do
   test "filters pets by species" do
     assert {:ok, pets} =
              PetManager.list_pets(
-               state_with_pets(), %{species: "perro"}
+               state_with_pets(),
+               %{species: "perro"}
              )
 
     assert length(pets) == 2
@@ -185,7 +303,8 @@ defmodule EmergencySystem.Pets.PetManagerTest do
   test "filters pets by zone" do
     assert {:ok, pets} =
              PetManager.list_pets(
-               state_with_pets(), %{zone_code: "Z001"}
+               state_with_pets(),
+               %{zone_code: "Z001"}
              )
 
     assert length(pets) == 1
@@ -219,14 +338,16 @@ defmodule EmergencySystem.Pets.PetManagerTest do
   test "rejects an invalid pet filter" do
     assert {:error, :invalid_filters} =
              PetManager.list_pets(
-               state_with_pets(), %{unknown: "value"}
+               state_with_pets(),
+               %{unknown: "value"}
              )
   end
 
   test "rejects an invalid pet status filter" do
     assert {:error, :invalid_filters} =
              PetManager.list_pets(
-               state_with_pets(), %{status: :unknown}
+               state_with_pets(),
+               %{status: :unknown}
              )
   end
 
@@ -368,9 +489,9 @@ defmodule EmergencySystem.Pets.PetManagerTest do
       assert {:ok, matches} = PetManager.find_possible_matches(state)
 
       assert Enum.any?(matches, fn match ->
-        match.lost_pet_id == "PET020" and
-          match.found_pet_id == "PET021"
-      end) == false
+               match.lost_pet_id == "PET020" and
+                 match.found_pet_id == "PET021"
+             end) == false
     end
 
     test "returns matches ordered by similarity score" do
@@ -397,12 +518,12 @@ defmodule EmergencySystem.Pets.PetManagerTest do
       assert {:ok, matches} = PetManager.find_possible_matches(state)
 
       assert Enum.all?(matches, fn match ->
-        lost_pet = state.pets[match.lost_pet_id]
-        found_pet = state.pets[match.found_pet_id]
+               lost_pet = state.pets[match.lost_pet_id]
+               found_pet = state.pets[match.found_pet_id]
 
-        lost_pet.report_type == :lost and
-          found_pet.report_type == :found
-      end)
+               lost_pet.report_type == :lost and
+                 found_pet.report_type == :found
+             end)
     end
 
     test "does not include resolved reports" do
@@ -414,8 +535,8 @@ defmodule EmergencySystem.Pets.PetManagerTest do
       assert {:ok, matches} = PetManager.find_possible_matches(state)
 
       refute Enum.any?(matches, fn match ->
-        match.lost_pet_id == "PET020"
-      end)
+               match.lost_pet_id == "PET020"
+             end)
     end
 
     test "returns an empty list when there are no possible matches" do
@@ -518,5 +639,4 @@ defmodule EmergencySystem.Pets.PetManagerTest do
                PetManager.confirm_match(%{}, "PET020", "PET021")
     end
   end
-
 end

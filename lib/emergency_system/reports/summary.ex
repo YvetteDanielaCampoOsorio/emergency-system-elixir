@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Reports.Summary do
   @moduledoc """
   Genera consultas y reportes generales sobre el estado del
@@ -72,18 +71,17 @@ defmodule EmergencySystem.Reports.Summary do
     } do
       {{:ok, resources}, {:ok, stocks}}
       when is_map(resources) and is_map(stocks) ->
-
         critical =
           Enum.reduce(stocks, [], fn
             {{resource_code, location}, quantity}, acc
             when is_integer(quantity) and quantity == 0 ->
-
               case Map.fetch(resources, resource_code) do
                 {:ok, resource} ->
-                  item = Map.merge(resource, %{
-                    location: location,
-                    quantity: quantity
-                  })
+                  item =
+                    Map.merge(resource, %{
+                      location: location,
+                      quantity: quantity
+                    })
 
                   [item | acc]
 
@@ -105,6 +103,7 @@ defmodule EmergencySystem.Reports.Summary do
   def critical_resources(_state) do
     {:error, :invalid_state}
   end
+
   # ==================================================
   # RESUMEN GENERAL DE LA EMERGENCIA
   # ==================================================
@@ -130,7 +129,6 @@ defmodule EmergencySystem.Reports.Summary do
     with true <- valid_summary_state?(state),
          {:ok, pending} <- pending_needs(state),
          {:ok, critical} <- critical_resources(state) do
-
       people = Map.values(state.people)
       pets = Map.values(state.pets)
       shelters = Map.values(state.shelters)
@@ -229,5 +227,4 @@ defmodule EmergencySystem.Reports.Summary do
       end) and
       match?(%MapSet{}, Map.get(state, :active_users))
   end
-
 end

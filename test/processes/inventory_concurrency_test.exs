@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Processes.InventoryConcurrencyTest do
   use ExUnit.Case, async: false
 

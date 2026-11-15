@@ -119,22 +119,21 @@ defmodule EmergencySystem.Processes.NeedServer do
     {:reply, result, state_server}
   end
 
+  @impl true
+  def handle_call({:list_needs, filters}, _from, state_server) do
+    state = StateServer.get_state(state_server)
 
-@impl true
-def handle_call({:list_needs, filters}, _from, state_server) do
-  state = StateServer.get_state(state_server)
+    result =
+      case NeedManager.list_needs(state) do
+        {:ok, needs} ->
+          apply_need_filters(needs, filters)
 
-  result =
-    case NeedManager.list_needs(state) do
-      {:ok, needs} ->
-        apply_need_filters(needs, filters)
+        error ->
+          error
+      end
 
-      error ->
-        error
-    end
-
-  {:reply, result, state_server}
-end
+    {:reply, result, state_server}
+  end
 
   @impl true
   def handle_call({:update_need_status, need_id, new_status}, _from, state_server) do
@@ -145,32 +144,32 @@ end
 
     {:reply, result, state_server}
   end
-# ============================================================
-# FILTRADO DE NECESIDADES
-# ============================================================
 
-defp apply_need_filters(needs, filters) when is_map(filters) do
-  Enum.reduce(filters, needs, fn
-    {:zone_code, value}, acc ->
-      Enum.filter(acc, &(&1.zone_code == value))
+  # ============================================================
+  # FILTRADO DE NECESIDADES
+  # ============================================================
 
-    {:type, value}, acc ->
-      Enum.filter(acc, &(&1.type == value))
+  defp apply_need_filters(needs, filters) when is_map(filters) do
+    Enum.reduce(filters, needs, fn
+      {:zone_code, value}, acc ->
+        Enum.filter(acc, &(&1.zone_code == value))
 
-    {:priority, value}, acc ->
-      Enum.filter(acc, &(&1.priority == value))
+      {:type, value}, acc ->
+        Enum.filter(acc, &(&1.type == value))
 
-    {:status, value}, acc ->
-      Enum.filter(acc, &(&1.status == value))
+      {:priority, value}, acc ->
+        Enum.filter(acc, &(&1.priority == value))
 
-    _filter, acc ->
-      acc
-  end)
-  |> then(&{:ok, &1})
-end
+      {:status, value}, acc ->
+        Enum.filter(acc, &(&1.status == value))
 
-defp apply_need_filters(_needs, _filters) do
-  {:error, :invalid_arguments}
-end
+      _filter, acc ->
+        acc
+    end)
+    |> then(&{:ok, &1})
+  end
 
+  defp apply_need_filters(_needs, _filters) do
+    {:error, :invalid_arguments}
+  end
 end

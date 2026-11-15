@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Assignments.AssignmentManagerTest do
   use ExUnit.Case, async: true
 

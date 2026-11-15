@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Communication.MessageManagerTest do
   use ExUnit.Case
 
@@ -34,7 +33,11 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:error, :invalid_id} =
              MessageManager.register_message(
-               state, "", "Laura", "Andres", "Estoy bien"
+               state,
+               "",
+               "Laura",
+               "Andres",
+               "Estoy bien"
              )
   end
 
@@ -43,7 +46,11 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:error, :invalid_sender} =
              MessageManager.register_message(
-               state, "MSG001", "", "Andres", "Estoy bien"
+               state,
+               "MSG001",
+               "",
+               "Andres",
+               "Estoy bien"
              )
   end
 
@@ -52,7 +59,11 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:error, :invalid_recipient} =
              MessageManager.register_message(
-               state, "MSG001", "Laura", "", "Estoy bien"
+               state,
+               "MSG001",
+               "Laura",
+               "",
+               "Estoy bien"
              )
   end
 
@@ -61,7 +72,11 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:error, :invalid_content} =
              MessageManager.register_message(
-               state, "MSG001", "Laura", "Andres", ""
+               state,
+               "MSG001",
+               "Laura",
+               "Andres",
+               ""
              )
   end
 
@@ -74,7 +89,11 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:error, :duplicate_message} =
              MessageManager.register_message(
-               state, "MSG001", "Laura", "Andres", "Estoy bien"
+               state,
+               "MSG001",
+               "Laura",
+               "Andres",
+               "Estoy bien"
              )
   end
 
@@ -83,7 +102,11 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:error, :invalid_state} =
              MessageManager.register_message(
-               state, "MSG001", "Laura", "Andres", "Estoy bien"
+               state,
+               "MSG001",
+               "Laura",
+               "Andres",
+               "Estoy bien"
              )
   end
 
@@ -92,7 +115,11 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:ok, updated_state, _message} =
              MessageManager.register_message(
-               state, "MSG001", "Laura", "Andres", "Estoy bien"
+               state,
+               "MSG001",
+               "Laura",
+               "Andres",
+               "Estoy bien"
              )
 
     assert state.messages == []
@@ -104,24 +131,48 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
   # ============================================================
 
   test "lists all registered messages" do
-    state = %{messages: [
-      %{id: "MSG001", sender: "Laura", recipient: "Andres",
-        content: "Estoy bien", status: :pending},
-      %{id: "MSG002", sender: "Carlos", recipient: "Maria",
-        content: "Ya llegué", status: :delivered}
-    ]}
+    state = %{
+      messages: [
+        %{
+          id: "MSG001",
+          sender: "Laura",
+          recipient: "Andres",
+          content: "Estoy bien",
+          status: :pending
+        },
+        %{
+          id: "MSG002",
+          sender: "Carlos",
+          recipient: "Maria",
+          content: "Ya llegué",
+          status: :delivered
+        }
+      ]
+    }
 
     assert {:ok, messages} = MessageManager.list_messages(state)
     assert length(messages) == 2
   end
 
   test "filters messages by recipient" do
-    state = %{messages: [
-      %{id: "MSG001", sender: "Laura", recipient: "Andres",
-        content: "Estoy bien", status: :pending},
-      %{id: "MSG002", sender: "Carlos", recipient: "Maria",
-        content: "Ya llegué", status: :delivered}
-    ]}
+    state = %{
+      messages: [
+        %{
+          id: "MSG001",
+          sender: "Laura",
+          recipient: "Andres",
+          content: "Estoy bien",
+          status: :pending
+        },
+        %{
+          id: "MSG002",
+          sender: "Carlos",
+          recipient: "Maria",
+          content: "Ya llegué",
+          status: :delivered
+        }
+      ]
+    }
 
     assert {:ok, messages} =
              MessageManager.list_messages(state, %{recipient: "Andres"})
@@ -131,12 +182,24 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
   end
 
   test "filters messages by sender" do
-    state = %{messages: [
-      %{id: "MSG001", sender: "Laura", recipient: "Andres",
-        content: "Estoy bien", status: :pending},
-      %{id: "MSG002", sender: "Carlos", recipient: "Maria",
-        content: "Ya llegué", status: :delivered}
-    ]}
+    state = %{
+      messages: [
+        %{
+          id: "MSG001",
+          sender: "Laura",
+          recipient: "Andres",
+          content: "Estoy bien",
+          status: :pending
+        },
+        %{
+          id: "MSG002",
+          sender: "Carlos",
+          recipient: "Maria",
+          content: "Ya llegué",
+          status: :delivered
+        }
+      ]
+    }
 
     assert {:ok, messages} =
              MessageManager.list_messages(state, %{sender: "Carlos"})
@@ -146,12 +209,24 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
   end
 
   test "filters messages by status" do
-    state = %{messages: [
-      %{id: "MSG001", sender: "Laura", recipient: "Andres",
-        content: "Estoy bien", status: :pending},
-      %{id: "MSG002", sender: "Carlos", recipient: "Maria",
-        content: "Ya llegué", status: :delivered}
-    ]}
+    state = %{
+      messages: [
+        %{
+          id: "MSG001",
+          sender: "Laura",
+          recipient: "Andres",
+          content: "Estoy bien",
+          status: :pending
+        },
+        %{
+          id: "MSG002",
+          sender: "Carlos",
+          recipient: "Maria",
+          content: "Ya llegué",
+          status: :delivered
+        }
+      ]
+    }
 
     assert {:ok, messages} =
              MessageManager.list_messages(state, %{status: :delivered})
@@ -191,7 +266,9 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:ok, updated_state, updated_message} =
              MessageManager.update_message_status(
-               state, "MSG010", :delivered
+               state,
+               "MSG010",
+               :delivered
              )
 
     assert updated_message.status == :delivered
@@ -211,7 +288,9 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:ok, _updated_state, updated_message} =
              MessageManager.update_message_status(
-               state, "MSG011", :pending
+               state,
+               "MSG011",
+               :pending
              )
 
     assert updated_message.status == :pending
@@ -222,7 +301,9 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:error, :invalid_status} =
              MessageManager.update_message_status(
-               state, "MSG010", :unknown
+               state,
+               "MSG010",
+               :unknown
              )
   end
 
@@ -231,7 +312,9 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:error, :invalid_id} =
              MessageManager.update_message_status(
-               state, "", :delivered
+               state,
+               "",
+               :delivered
              )
   end
 
@@ -240,7 +323,9 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:error, :message_not_found} =
              MessageManager.update_message_status(
-               state, "MSG999", :delivered
+               state,
+               "MSG999",
+               :delivered
              )
   end
 
@@ -257,7 +342,9 @@ defmodule EmergencySystem.Communication.MessageManagerTest do
 
     assert {:ok, updated_state, _updated_message} =
              MessageManager.update_message_status(
-               state, "MSG012", :delivered
+               state,
+               "MSG012",
+               :delivered
              )
 
     assert hd(state.messages).status == :pending

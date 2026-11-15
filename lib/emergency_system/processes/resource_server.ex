@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Processes.ResourceServer do
   use GenServer
 

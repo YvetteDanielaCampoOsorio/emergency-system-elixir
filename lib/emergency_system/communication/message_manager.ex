@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Communication.MessageManager do
   @moduledoc """
   Gestiona la comunicación entre personas y familiares durante una emergencia.
@@ -48,9 +47,9 @@ defmodule EmergencySystem.Communication.MessageManager do
          true <- valid_text?(sender) || {:error, :invalid_sender},
          true <- valid_text?(recipient) || {:error, :invalid_recipient},
          true <- valid_text?(content) || {:error, :invalid_content},
-         true <- not message_exists?(state.messages, id) ||
-                   {:error, :duplicate_message} do
-
+         true <-
+           not message_exists?(state.messages, id) ||
+             {:error, :duplicate_message} do
       message = %{
         id: id,
         sender: sender,
@@ -61,8 +60,8 @@ defmodule EmergencySystem.Communication.MessageManager do
       }
 
       updated_state = %{
-        state |
-        messages: [message | state.messages]
+        state
+        | messages: [message | state.messages]
       }
 
       {:ok, updated_state, message}
@@ -96,7 +95,6 @@ defmodule EmergencySystem.Communication.MessageManager do
     with true <- valid_state?(state) || {:error, :invalid_state},
          true <- is_map(filters) || {:error, :invalid_filters},
          true <- valid_filters?(filters) || {:error, :invalid_filters} do
-
       messages =
         Enum.filter(state.messages, fn message ->
           Enum.all?(filters, fn
@@ -141,7 +139,6 @@ defmodule EmergencySystem.Communication.MessageManager do
          true <- valid_text?(message_id) || {:error, :invalid_id},
          true <- new_status in @valid_statuses || {:error, :invalid_status},
          {:ok, message} <- find_message(state.messages, message_id) do
-
       updated_message = %{message | status: new_status}
 
       updated_messages =
@@ -205,6 +202,4 @@ defmodule EmergencySystem.Communication.MessageManager do
       message -> {:ok, message}
     end
   end
-
-
 end

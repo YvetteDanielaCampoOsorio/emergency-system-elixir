@@ -292,7 +292,8 @@ defmodule EmergencySystem.Resources.ResourceManager do
 
   def register_exit(_state, _resource_code, _location, _quantity),
     do: {:error, :invalid_arguments}
-@doc """
+
+  @doc """
   Transfiere unidades de un recurso entre dos ubicaciones.
 
   ## Parámetros
@@ -319,7 +320,7 @@ defmodule EmergencySystem.Resources.ResourceManager do
              is_integer(quantity) do
     cond do
       String.trim(resource_code) == "" or
-          String.trim(origin) == "" or
+        String.trim(origin) == "" or
           String.trim(destination) == "" ->
         {:error, :empty_fields}
 
@@ -466,7 +467,6 @@ defmodule EmergencySystem.Resources.ResourceManager do
 
   def filter_by_category(_state, _category), do: {:error, :invalid_arguments}
 
-
   @doc """
   Consulta los recursos disponibles en una ubicación específica.
 
@@ -496,7 +496,6 @@ defmodule EmergencySystem.Resources.ResourceManager do
       } do
         {{:ok, resources}, {:ok, stocks}}
         when is_map(resources) and is_map(stocks) ->
-
           filtered_resources =
             Enum.reduce(stocks, [], fn
               {{resource_code, stock_location}, quantity}, acc

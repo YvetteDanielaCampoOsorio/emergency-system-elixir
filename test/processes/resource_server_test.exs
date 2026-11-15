@@ -1,4 +1,3 @@
-
 defmodule EmergencySystem.Processes.ResourceServerTest do
   use ExUnit.Case, async: false
 
@@ -8,14 +7,10 @@ defmodule EmergencySystem.Processes.ResourceServerTest do
 
   setup do
     state_server =
-      start_supervised!(
-        {StateServer, initial_state: Data.initial_state()}
-      )
+      start_supervised!({StateServer, initial_state: Data.initial_state()})
 
     resource_server =
-      start_supervised!(
-        {ResourceServer, state_server: state_server}
-      )
+      start_supervised!({ResourceServer, state_server: state_server})
 
     %{resource_server: resource_server}
   end
@@ -44,8 +39,14 @@ defmodule EmergencySystem.Processes.ResourceServerTest do
   test "consulta los recursos registrados", %{resource_server: server} do
     assert {:ok, _resource} =
              ResourceServer.register_resource(
-               server, "R001", "Agua potable", :water,
-               100, "litros", "centro_1", "Agua para consumo"
+               server,
+               "R001",
+               "Agua potable",
+               :water,
+               100,
+               "litros",
+               "centro_1",
+               "Agua para consumo"
              )
 
     assert {:ok, resources} = ResourceServer.list_resources(server)
@@ -57,8 +58,14 @@ defmodule EmergencySystem.Processes.ResourceServerTest do
   test "filtra los recursos por categoría", %{resource_server: server} do
     assert {:ok, _resource} =
              ResourceServer.register_resource(
-               server, "R001", "Agua potable", :water,
-               100, "litros", "centro_1", "Agua para consumo"
+               server,
+               "R001",
+               "Agua potable",
+               :water,
+               100,
+               "litros",
+               "centro_1",
+               "Agua para consumo"
              )
 
     assert {:ok, resources} =
@@ -70,8 +77,14 @@ defmodule EmergencySystem.Processes.ResourceServerTest do
   test "filtra los recursos por ubicación", %{resource_server: server} do
     assert {:ok, _resource} =
              ResourceServer.register_resource(
-               server, "R001", "Agua potable", :water,
-               100, "litros", "centro_1", "Agua para consumo"
+               server,
+               "R001",
+               "Agua potable",
+               :water,
+               100,
+               "litros",
+               "centro_1",
+               "Agua para consumo"
              )
 
     assert {:ok, resources} =
@@ -87,8 +100,14 @@ defmodule EmergencySystem.Processes.ResourceServerTest do
   test "registra una entrada de inventario", %{resource_server: server} do
     assert {:ok, _resource} =
              ResourceServer.register_resource(
-               server, "R001", "Agua potable", :water,
-               100, "litros", "centro_1", "Agua para consumo"
+               server,
+               "R001",
+               "Agua potable",
+               :water,
+               100,
+               "litros",
+               "centro_1",
+               "Agua para consumo"
              )
 
     assert {:ok, _movement} =
@@ -103,8 +122,14 @@ defmodule EmergencySystem.Processes.ResourceServerTest do
   test "registra una salida de inventario", %{resource_server: server} do
     assert {:ok, _resource} =
              ResourceServer.register_resource(
-               server, "R001", "Agua potable", :water,
-               100, "litros", "centro_1", "Agua para consumo"
+               server,
+               "R001",
+               "Agua potable",
+               :water,
+               100,
+               "litros",
+               "centro_1",
+               "Agua para consumo"
              )
 
     assert {:ok, _movement} =
@@ -119,13 +144,23 @@ defmodule EmergencySystem.Processes.ResourceServerTest do
   test "transfiere recursos entre ubicaciones", %{resource_server: server} do
     assert {:ok, _resource} =
              ResourceServer.register_resource(
-               server, "R001", "Agua potable", :water,
-               100, "litros", "centro_1", "Agua para consumo"
+               server,
+               "R001",
+               "Agua potable",
+               :water,
+               100,
+               "litros",
+               "centro_1",
+               "Agua para consumo"
              )
 
     assert {:ok, _movement} =
              ResourceServer.transfer_resource(
-               server, "R001", "centro_1", "centro_2", 30
+               server,
+               "R001",
+               "centro_1",
+               "centro_2",
+               30
              )
 
     assert {:ok, resources} =
